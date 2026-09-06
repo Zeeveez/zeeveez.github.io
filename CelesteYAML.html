@@ -449,14 +449,16 @@
 					"value": 50,
 					"type": "number",
 					"min": 0,
-					"max": 202
+					"max": 202,
+					"useCurrentValueOnEval": true
 				},
 				"strawberriesrequiredpercentage": {
 					"name": "Strawberries Required Percentage",
 					"value": 0,
 					"type": "number",
 					"min": 0,
-					"max": 100
+					"max": 100,
+					"useCurrentValueOnEval": true
 				},
 				"goalarea": {
 					"name": "Goal Area",
@@ -503,12 +505,14 @@
 							"name": "Poetry Slam",
 							"value": "poetryslam"
 						}
-					]
+					],
+					"useCurrentValueOnEval": true
 				},
 				"enablecore": {
 					"name": "Enable Core",
 					"value": false,
-					"type": "bool"
+					"type": "bool",
+					"useCurrentValueOnEval": false
 				},
 				"enablefarewell": {
 					"name": "Enable Farewell",
@@ -527,37 +531,44 @@
 							"name": "Farewell",
 							"value": "farewell"
 						}
-					]
+					],
+					"useCurrentValueOnEval": false
 				},
 				"enablebsides": {
 					"name": "Enable B-Sides",
 					"value": false,
-					"type": "bool"
+					"type": "bool",
+					"useCurrentValueOnEval": false
 				},
 				"enablecsides": {
 					"name": "Enable C-Sides",
 					"value": false,
-					"type": "bool"
+					"type": "bool",
+					"useCurrentValueOnEval": false
 				},
 				"binosanity": {
 					"name": "Binosanity",
 					"value": false,
-					"type": "bool"
+					"type": "bool",
+					"useCurrentValueOnEval": false
 				},
 				"roomsanity": {
 					"name": "Roomsanity",
 					"value": false,
-					"type": "bool"
+					"type": "bool",
+					"useCurrentValueOnEval": false
 				},
 				"carsanity": {
 					"name": "Carsanity",
 					"value": false,
-					"type": "bool"
+					"type": "bool",
+					"useCurrentValueOnEval": true
 				},
 				"enablegoldens": {
 					"name": "Enable Goldens",
 					"value": false,
-					"type": "bool"
+					"type": "bool",
+					"useCurrentValueOnEval": false
 				},
 				"splitinteractables": {
 					"name": "Split Interactables",
@@ -580,7 +591,8 @@
 							"name": "Per Level and Side",
 							"value": "perlevelandside"
 						}
-					]
+					],
+					"useCurrentValueOnEval": false
 				},
 				"dashshuffle": {
 					"name": "Dash Shuffle",
@@ -607,7 +619,8 @@
 							"name": "Octal",
 							"value": "octal"
 						}
-					]
+					],
+					"useCurrentValueOnEval": true
 				},
 				"climbshuffle": {
 					"name": "Climb Shuffle",
@@ -626,12 +639,14 @@
 							"name": "Split",
 							"value": "split"
 						}
-					]
+					],
+					"useCurrentValueOnEval": true
 				},
 				"crouchshuffle": {
 					"name": "Crouch Shuffle",
 					"value": false,
-					"type": "bool"
+					"type": "bool",
+					"useCurrentValueOnEval": true
 				},
 				"torchbehavior": {
 					"name": "Torch Behaviour",
@@ -654,35 +669,38 @@
 							"name": "Never Lit",
 							"value": "neverlit"
 						}
-					]
+					],
+					"useCurrentValueOnEval": true
 				},
 				"junkfillpercentage": {
 					"name": "Junk Fill Percentage",
 					"value": 50,
 					"type": "number",
 					"min": 0,
-					"max": 100
+					"max": 100,
+					"useCurrentValueOnEval": true
 				}
 			}
 			
 			$scope.enabledLevels = [];
 			$scope.locations = 0;
+			$scope.items = 0;
 			
-			$scope.calculateEnabledLevels = function(){
+			$scope.calculateEnabledLevels = function(settings){
 				var enabledLevels = ["0a","1a","2a","3a","4a","5a","6a","7a","8a"];
-				if ($scope.settings.enablebsides.value) { enabledLevels = enabledLevels.concat(["1b","2b","3b","4b","5b","6b","7b"]); }
-				if ($scope.settings.enablecsides.value) { enabledLevels = enabledLevels.concat(["1c","2c","3c","4c","5c","6c","7c"]); }
+				if (settings.enablebsides) { enabledLevels = enabledLevels.concat(["1b","2b","3b","4b","5b","6b","7b"]); }
+				if (settings.enablecsides) { enabledLevels = enabledLevels.concat(["1c","2c","3c","4c","5c","6c","7c"]); }
 				
-				if ($scope.settings.enablecore.value) { 
+				if (settings.enablecore) { 
 					enabledLevels.push("9a");
-					if ($scope.settings.enablebsides.value) { enabledLevels.push("9b"); }
-					if ($scope.settings.enablecsides.value) { enabledLevels.push("9c"); }
+					if (settings.enablebsides) { enabledLevels.push("9b"); }
+					if (settings.enablecsides) { enabledLevels.push("9c"); }
 				}
 				
-				if ($scope.settings.enablefarewell.value == "emptyspace") { enabledLevels.push("10a"); }
-				if ($scope.settings.enablefarewell.value == "farewell") { enabledLevels.push("10a"); enabledLevels.push("10b"); }
+				if (settings.enablefarewell == "emptyspace") { enabledLevels.push("10a"); }
+				if (settings.enablefarewell == "farewell") { enabledLevels.push("10a"); enabledLevels.push("10b"); }
 				
-				switch($scope.settings.goalarea.value){
+				switch(settings.goalarea){
 					case "7a":
 						break;
 					case "7b":
@@ -711,12 +729,12 @@
 						break;
 				}
 				
-				$scope.enabledLevels = enabledLevels;
+				return enabledLevels;
 			};
 			
-			$scope.countLocations = function(){
+			$scope.countLocations = function(enabledLevels, settings){
 				var locations = 0;
-				for(var levelId of $scope.enabledLevels){
+				for(var levelId of enabledLevels){
 					var level = $scope.levels[levelId];
 					locations += level.Strawberries;
 					locations += level["Level Clears"];
@@ -725,23 +743,23 @@
 					locations += level.Keys;
 					locations += level.Gems;
 					locations += level.Checkpoints;
-					if($scope.settings.binosanity.value){ locations += level.Binoculars; }
-					if($scope.settings.roomsanity.value){ locations += level.Rooms; }
-					if($scope.settings.carsanity.value){ locations += level.Cars; }
-					if($scope.settings.enablegoldens.value){ locations += level["Golden Strawberries"]; }
+					if(settings.binosanity){ locations += level.Binoculars; }
+					if(settings.roomsanity){ locations += level.Rooms; }
+					if(settings.carsanity){ locations += level.Cars; }
+					if(settings.enablegoldens){ locations += level["Golden Strawberries"]; }
 					// Always add farewell golden berry if goal
-					if(levelId == '10c' && $scope.settings.goalarea.value == '10c' && !$scope.settings.enablegoldens.value){ locations += level["Golden Strawberries"]; }
+					if(levelId == '10c' && settings.goalarea == '10c' && !settings.enablegoldens){ locations += level["Golden Strawberries"]; }
 				}
 				
-				if($scope.settings.goalarea.value == "poetryslam") { locations += 1; }
+				if(settings.goalarea == "poetryslam") { locations += 1; }
 				
-				$scope.locations = locations;
+				return locations;
 			};
 			
-			$scope.countItems = function(){
+			$scope.countItems = function(enabledLevels, settings){
 				var items = 0;
 				
-				switch($scope.settings.dashshuffle.value){
+				switch(settings.dashshuffle){
 					case "none":
 						break;
 					case "unified":
@@ -756,7 +774,7 @@
 						break;
 				}
 				
-				switch($scope.settings.climbshuffle.value){
+				switch(settings.climbshuffle){
 					case "none":
 						break;
 					case "unified":
@@ -767,9 +785,9 @@
 						break;
 				}
 				
-				if($scope.settings.crouchshuffle.value) { items += 1; }
+				if(settings.crouchshuffle) { items += 1; }
 				
-				for(var levelId of $scope.enabledLevels){
+				for(var levelId of enabledLevels){
 					var level = $scope.levels[levelId];
 					items += level.Keys;
 					items += level.Gems;
@@ -777,36 +795,94 @@
 				}
 				
 				items += 1; // House Keys
-				if($scope.settings.goalarea.value == "poetryslam") { items += 16; } // Crystal Hearts are not filler if poetry slam
+				if(settings.goalarea == "poetryslam") { items += 16; } // Crystal Hearts are not filler if poetry slam
 				
 				var interactables = new Set();
-				for(var levelId of $scope.enabledLevels){
+				for(var levelId of enabledLevels){
 					var level = $scope.levels[levelId];
 					var interactablePrefix = "";
 					var levelNo = levelId.match(/\d+/)[0];
 					var sideNo = levelNo == '10' ? 'a' : levelId.match(/[^\d]+/)[0];
-					if($scope.settings.splitinteractables.value == "perlevel") { interactablePrefix = `${levelNo}-`; }
-					else if($scope.settings.splitinteractables.value == "perside") { interactablePrefix = `${sideNo}-`; }
-					else if($scope.settings.splitinteractables.value == "perlevelandside") { interactablePrefix = `${levelNo}${sideNo}-`; }
+					if(settings.splitinteractables == "perlevel") { interactablePrefix = `${levelNo}-`; }
+					else if(settings.splitinteractables == "perside") { interactablePrefix = `${sideNo}-`; }
+					else if(settings.splitinteractables == "perlevelandside") { interactablePrefix = `${levelNo}${sideNo}-`; }
 					
 					for(var itemName of level.Items){
-						if(itemName.includes("torches") && $scope.settings.torchbehavior.value == "neverlit"){ continue; }
+						if(itemName.includes("torches") && settings.torchbehavior == "neverlit"){ continue; }
 						interactables.add(`${interactablePrefix}${itemName}`);
 					}
 				}
 				items += interactables.size;
 				
-				$scope.items = items;
+				return items;
 			};
 			
+			$scope.calculateAll = function(results, settings = {}){
+				if(results == undefined){
+					var results = [];
+					$scope.calculateAll(results);
+					return results;
+				}
+				
+				for(var setting of Object.keys($scope.settings)){
+					if(setting in settings){ continue; }
+					if($scope.settings[setting].useCurrentValueOnEval){ settings[setting] = $scope.settings[setting].value; continue; }
+					switch($scope.settings[setting].type){
+						case "bool":
+							for(var value of [true, false]){
+								var settingsCopy = structuredClone(settings);
+								settingsCopy[setting] = value;
+								$scope.calculateAll(results, settingsCopy);
+							}
+							break;
+						case "choice":
+							for(var value of $scope.settings[setting].options){
+								var settingsCopy = structuredClone(settings);
+								settingsCopy[setting] = value.value;
+								$scope.calculateAll(results, settingsCopy);
+							}
+							break;
+						case "number":
+							continue;
+							break;
+					}
+					return;
+				}
+				var enabledLevels = $scope.calculateEnabledLevels(settings);
+				var locations = $scope.countLocations(enabledLevels, settings);
+				var items = $scope.countItems(enabledLevels, settings);
+				results.push([settings, locations, items]);
+			}
+			
+			$scope.generateTable = function(){
+				var results = $scope.calculateAll();
+				var rows = [];
+				for(var row of results){
+					var dataRow = [];
+					for(var setting of Object.keys($scope.settings)){
+						if($scope.settings[setting].useCurrentValueOnEval){ continue; }
+						dataRow.push(row[0][setting]);					
+					};
+					dataRow.push(row[1]);
+					dataRow.push(row[2]);
+					rows.push(dataRow);
+				}
+				$scope.tableData = rows;
+			}
+			
 			$scope.refresh = function(){
-				$scope.calculateEnabledLevels();
-				$scope.countLocations();
-				$scope.countItems();
+				var settings = {};
+				for(var setting of Object.keys($scope.settings)){
+					settings[setting] = $scope.settings[setting].value;
+				}
+				$scope.enabledLevels = $scope.calculateEnabledLevels(settings);
+				$scope.locations = $scope.countLocations($scope.enabledLevels, settings);
+				$scope.items = $scope.countItems($scope.enabledLevels, settings);
+				$scope.generateTable();
 			};
 			
 			$scope.refresh();
-		}); 
+		});
 		</script>
 	</head>
 	<body>
@@ -850,6 +926,18 @@
 						<p>
 							Valid: <span style="font-weight:700;" ng-style="{'color': (locations >= items + settings.totalstrawberries.value ? 'green' : 'red')}">{{locations >= items + settings.totalstrawberries.value}}</span>
 						</p>
+						<table>
+							<tr>
+								<th ng-repeat="setting in settings track by $index" ng-if="!setting.useCurrentValueOnEval">{{setting.name}}</th>
+								<th>Locations</th>
+								<th>Items</th>
+								<th>Valid</th>
+							</tr>
+							<tr ng-repeat="row in tableData track by $index">
+								<td ng-repeat="value in row track by $index">{{value}}</td>
+								<td ng-style="{'background-color': (row[row.length - 2] >= row[row.length - 1] + settings.totalstrawberries.value ? 'green' : 'red')}"></td>
+							<tr>
+						</table>
 					</div>
 				</main>
 			</div>
