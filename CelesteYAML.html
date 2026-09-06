@@ -1,0 +1,1133 @@
+<html>
+	<head>
+		<style>
+			/* Global */
+			* {
+				font-family: Arial, Helvetica, sans-serif;
+				font-size: 12pt;
+				color: white;
+			}
+
+				/**:focus {
+					outline-offset: -3px;
+					outline: 4px dashed purple;
+				}*/
+
+			body {
+				margin: 0px;
+			}
+
+
+			/* Page layout */
+
+			.page-container {
+				background-color: #0c0c0c;
+				display: flex;
+				flex-direction: row;
+				justify-content: space-around;
+				margin: 0px;
+			}
+
+			.page {
+				box-sizing: border-box;
+				display: flex;
+				flex-direction: row;
+				height: 100vh;
+				margin: 0px;
+				width: 100%;
+				max-width: 1300px;
+			}
+
+
+			/* Navigation/info/etc. pane */
+
+			.left-pane {
+				background-color: #0c0c0c;
+				display: flex;
+				flex-direction: column;
+				justify-content: space-between;
+				width: min-content;
+			}
+
+			.nav-tree a {
+				box-sizing: border-box;
+				align-items: center;
+				border-bottom: 1px solid white;
+				display: inline-flex;
+				font-size: 12pt;
+				height: 36pt;
+				padding-left: 12pt;
+				text-decoration: none;
+				width: 100%;
+			}
+
+				.nav-tree a.active {
+					background-color: #222222;
+					cursor: default;
+				}
+
+				.nav-tree a.sub-item {
+					padding-left: 24pt;
+				}
+
+				.nav-tree a:hover {
+					background-color: #303030;
+				}
+
+			.copyright-policy {
+				box-sizing: border-box;
+				font-size: 10pt;
+				padding: 10pt;
+				white-space: nowrap;
+			}
+
+				.copyright-policy * {
+					font-size: 10pt;
+				}
+
+
+			/* Actual content pane */
+
+			.main-pane {
+				background-color: #222222;
+				overflow-x: hidden;
+				overflow-y: auto;
+				padding: 15px;
+				scrollbar-gutter: stable;
+				width: 100%;
+				line-height: 1.25em;
+			}
+
+				.main-pane *:is(h1, h2, h3, h4, h5, h6) {
+					margin: 25px 5px 25px 5px;
+				}
+
+				.main-pane > *:not(h1, h2, h3, h4, h5, h6) {
+					margin-left: 30px;
+					margin-right: 30px;
+				}
+
+				.main-pane hr {
+					color: #444444;
+					margin-left: 12px;
+					margin-right: 12px;
+				}
+
+				.main-pane h1 {
+					font-size: 24pt;
+				}
+
+				.main-pane h2 {
+					font-size: 20pt;
+					margin-left: 10px;
+				}
+
+				.main-pane h3 {
+					font-size: 18pt;
+					margin-left: 15px;
+				}
+
+				.main-pane *:is(h4, h5, h6) {
+					font-size: 14pt;
+					margin-left: 25px;
+				}
+
+				.main-pane h1 .header-anchor {
+					width: 24pt;
+					height: 24pt;
+				}
+
+				.main-pane h2 .header-anchor {
+					width: 20pt;
+					height: 20pt;
+				}
+
+				.main-pane h3 .header-anchor {
+					width: 18pt;
+					height: 18pt;
+				}
+
+				.main-pane *:is(h4, h5, h6) .header-anchor {
+					width: 14pt;
+					height: 14pt;
+				}
+
+				.main-pane *:is(h1, h2, h3, h4, h5, h6) .header-anchor {
+					margin-left: 8px;
+					visibility: hidden;
+					display: inline-block;
+					background-image: url(/icons/anchor.svg);
+				}
+
+				.main-pane *:is(h1, h2, h3, h4, h5, h6):hover > .header-anchor {
+					visibility: visible;
+				}
+
+				.main-pane ul li{
+					margin-bottom: 8px;
+				}
+				
+				.main-pane blockquote {
+					background-color: #2a2822;
+					border-left: 3px solid #3a3822;
+					border-radius: 5px;
+					hyphens: auto;
+					overflow-wrap: break-word;
+					padding: 8px;
+					margin: 12px;
+				}
+
+				.main-pane > blockquote {
+					background-color: #2a2822;
+					border-left: 3px solid #3a3822;
+					border-radius: 5px;
+					hyphens: auto;
+					overflow-wrap: break-word;
+					padding: 8px;
+					margin: 16px 50px 16px 50px;
+				}
+
+				.main-pane blockquote p {
+					margin: 0px;
+				}
+
+				.main-pane code {
+					background-color: #333333;
+					border-radius: 5px;
+					display: inline-block;
+					font-family: Consolas;
+					padding: 0px 5px 0px 5px;
+				}
+
+				.main-pane .code-block-line:before {
+					counter-increment: line;
+					content: counter(line);
+					display: inline-block;
+					border-right: 1px solid #ddd;
+					padding-right: 5px;
+					margin-right: 8px;
+					color: #888;
+					width: 25px;
+					text-align: right;
+				}
+
+				.main-pane pre {
+					background-color: #333333;
+					border-radius: 5px;
+					overflow-x: auto;
+					padding: 8px;
+					scrollbar-gutter: stable;
+					counter-reset: line;
+					margin: 16px 50px 16px 50px;
+				}
+
+					.main-pane pre * {
+						font-family: Consolas;
+						font-size: 11pt;
+					}
+
+				.main-pane mark {
+					background-color: yellow;
+					color: black;
+				}
+
+				.main-pane input[type="number"] {
+					color: black;
+				}
+
+				.main-pane img {
+					max-width: 100%;
+					padding: 0px 50px 0px 50px;
+					display: block;
+					margin-left: auto;
+					margin-right: auto;
+					box-sizing: border-box;
+					text-align: center;
+				}
+
+				.main-pane table {
+					padding: 0px 50px 0px 50px;
+					margin-left: auto;
+					margin-right: auto;
+					box-sizing: border-box;
+					text-align: center;
+					border-collapse: collapse;
+				}
+
+					.main-pane table td {
+						border: 1px solid white;
+						padding: 3px 5px 3px 5px;
+					}
+
+					.main-pane table th {
+						border: 1px solid white;
+						padding: 8px 12px 8px 12px;
+					}
+
+					.main-pane table thead tr {
+						background-color: #282828;
+					}
+
+					.main-pane table tbody tr:nth-child(even) {
+						background-color: #282828;
+					}
+
+					.main-pane table tbody tr:nth-child(odd) {
+						background-color: #303030;
+					}
+		</style>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.8.3/angular.js" integrity="sha512-klc+qN5PPscoGxSzFpetVsCr9sryi2e2vHwZKq43FdFyhSAa7vAqog/Ifl8tzg/8mBZiG2MAKhyjH5oPJp65EA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+		<script>
+		var app = angular.module("celesteLocationsItemsApp", []);
+		app.controller("myCtrl", function($scope) {
+			$scope.levels = {
+				"0a": {
+					"Name": "Prologue",
+					"Golden Strawberries": 0,
+					"Strawberries": 0,
+					"Binoculars": 0,
+					"Cars": 1,
+					"Rooms": 6,
+					"Crystal Hearts": 0,
+					"Cassettes": 0,
+					"Level Clears": 1,
+					"Keys": 0,
+					"Gems": 0,
+					"Checkpoints": 0,
+					"Items": []
+				},
+				"1a": {
+					"Name": "Forsaken City A",
+					"Golden Strawberries": 2,
+					"Strawberries": 20,
+					"Binoculars": 0,
+					"Cars": 0,
+					"Rooms": 38,
+					"Crystal Hearts": 1,
+					"Cassettes": 1,
+					"Level Clears": 1,
+					"Keys": 0,
+					"Gems": 0,
+					"Checkpoints": 2,
+					"Items": ["springs", "traffic_blocks", "dash_refills", "pink_cassette_blocks", "blue_cassette_blocks" ]
+				},
+				"1b": {
+					"Name": "Forsaken City B",
+					"Golden Strawberries": 1,
+					"Strawberries": 0,
+					"Binoculars": 2,
+					"Cars": 0,
+					"Rooms": 16,
+					"Crystal Hearts": 0,
+					"Cassettes": 0,
+					"Level Clears": 1,
+					"Keys": 0,
+					"Gems": 0,
+					"Checkpoints": 2,
+					"Items": ["springs", "traffic_blocks", "dash_refills", "pink_cassette_blocks", "blue_cassette_blocks"]
+				},
+				"1c": {
+					"Name": "Forsaken City C",
+					"Golden Strawberries": 1,
+					"Strawberries": 0,
+					"Binoculars": 2,
+					"Cars": 0,
+					"Rooms": 3,
+					"Crystal Hearts": 0,
+					"Cassettes": 0,
+					"Level Clears": 1,
+					"Keys": 0,
+					"Gems": 0,
+					"Checkpoints": 0,
+					"Items": ["traffic_blocks", "dash_refills", "coins"]
+				},
+				"2a": {
+					"Name": "Old Site A",
+					"Golden Strawberries": 1,
+					"Strawberries": 18,
+					"Binoculars": 1,
+					"Cars": 0,
+					"Rooms": 45,
+					"Crystal Hearts": 1,
+					"Cassettes": 1,
+					"Level Clears": 1,
+					"Keys": 0,
+					"Gems": 0,
+					"Checkpoints": 2,
+					"Items": ["springs", "dream_blocks", "traffic_blocks", "strawberry_seeds", "dash_refills", "coins", "blue_cassette_blocks", "pink_cassette_blocks"]
+				},
+				"2b": {
+					"Name": "Old Site B",
+					"Golden Strawberries": 1,
+					"Strawberries": 0,
+					"Binoculars": 2,
+					"Cars": 0,
+					"Rooms": 17,
+					"Crystal Hearts": 0,
+					"Cassettes": 0,
+					"Level Clears": 1,
+					"Keys": 0,
+					"Gems": 0,
+					"Checkpoints": 2,
+					"Items": ["springs", "dream_blocks", "dash_refills", "coins", "blue_cassette_blocks"]
+				},
+				"2c": {
+					"Name": "Old Site C",
+					"Golden Strawberries": 1,
+					"Strawberries": 0,
+					"Binoculars": 1,
+					"Cars": 0,
+					"Rooms": 3,
+					"Crystal Hearts": 0,
+					"Cassettes": 0,
+					"Level Clears": 1,
+					"Keys": 0,
+					"Gems": 0,
+					"Checkpoints": 0,
+					"Items": ["springs", "dream_blocks", "dash_refills", "coins" ]
+				},
+				"3a": {
+					"Name": "Celestial Resort A",
+					"Golden Strawberries": 1,
+					"Strawberries": 25,
+					"Binoculars": 0,
+					"Cars": 0,
+					"Rooms": 65,
+					"Crystal Hearts": 1,
+					"Cassettes": 1,
+					"Level Clears": 1,
+					"Keys": 5,
+					"Gems": 0,
+					"Checkpoints": 3,
+					"Items": ["springs", "moving_platforms", "sinking_platforms", "dash_refills", "coins", "pink_cassette_blocks", "blue_cassette_blocks"]
+				},
+				"3b": {
+					"Name": "Celestial Resort B",
+					"Golden Strawberries": 1,
+					"Strawberries": 0,
+					"Binoculars": 2,
+					"Cars": 0,
+					"Rooms": 24,
+					"Crystal Hearts": 0,
+					"Cassettes": 0,
+					"Level Clears": 1,
+					"Keys": 0,
+					"Gems": 0,
+					"Checkpoints": 3,
+					"Items": ["springs", "dash_refills", "moving_platforms", "sinking_platforms", "coins", "pink_cassette_blocks", "blue_cassette_blocks"]
+				},
+				"3c": {
+					"Name": "Celestial Resort C",
+					"Golden Strawberries": 1,
+					"Strawberries": 0,
+					"Binoculars": 1,
+					"Cars": 0,
+					"Rooms": 3,
+					"Crystal Hearts": 0,
+					"Cassettes": 0,
+					"Level Clears": 1,
+					"Keys": 0,
+					"Gems": 0,
+					"Checkpoints": 0,
+					"Items": ["dash_refills", "sinking_platforms", "coins"]
+				},
+				"4a": {
+					"Name": "Golden Ridge A",
+					"Golden Strawberries": 1,
+					"Strawberries": 29,
+					"Binoculars": 3,
+					"Cars": 0,
+					"Rooms": 48,
+					"Crystal Hearts": 1,
+					"Cassettes": 1,
+					"Level Clears": 1,
+					"Keys": 0,
+					"Gems": 0,
+					"Checkpoints": 3,
+					"Items": ["blue_clouds", "blue_boosters", "moving_platforms", "coins", "strawberry_seeds", "springs", "move_blocks", "dash_refills", "pink_clouds", "white_block", "pink_cassette_blocks", "blue_cassette_blocks"]
+				},
+				"4b": {
+					"Name": "Golden Ridge B",
+					"Golden Strawberries": 1,
+					"Strawberries": 0,
+					"Binoculars": 4,
+					"Cars": 0,
+					"Rooms": 20,
+					"Crystal Hearts": 0,
+					"Cassettes": 0,
+					"Level Clears": 1,
+					"Keys": 0,
+					"Gems": 0,
+					"Checkpoints": 3,
+					"Items": ["blue_boosters", "moving_platforms", "move_blocks", "springs", "coins", "blue_clouds", "pink_clouds", "dash_refills", "pink_cassette_blocks", "blue_cassette_blocks"]
+				},
+				"4c": {
+					"Name": "Golden Ridge C",
+					"Golden Strawberries": 1,
+					"Strawberries": 0,
+					"Binoculars": 2,
+					"Cars": 0,
+					"Rooms": 3,
+					"Crystal Hearts": 0,
+					"Cassettes": 0,
+					"Level Clears": 1,
+					"Keys": 0,
+					"Gems": 0,
+					"Checkpoints": 0,
+					"Items": ["blue_boosters", "move_blocks", "dash_refills", "pink_clouds"]
+				},
+				"5a": {
+					"Name": "Mirror Temple A",
+					"Golden Strawberries": 1,
+					"Strawberries": 31,
+					"Binoculars": 1,
+					"Cars": 0,
+					"Rooms": 85,
+					"Crystal Hearts": 1,
+					"Cassettes": 1,
+					"Level Clears": 1,
+					"Keys": 5,
+					"Gems": 0,
+					"Checkpoints": 4,
+					"Items": ["swap_blocks", "red_boosters", "dash_switches", "dash_refills", "coins", "springs", "torches", "yellow_torches", "seekers", "theo_crystal", "strawberry_seeds", "pink_cassette_blocks", "blue_cassette_blocks" ]
+				},
+				"5b": {
+					"Name": "Mirror Temple B",
+					"Golden Strawberries": 1,
+					"Strawberries": 0,
+					"Binoculars": 1,
+					"Cars": 0,
+					"Rooms": 25,
+					"Crystal Hearts": 0,
+					"Cassettes": 0,
+					"Level Clears": 1,
+					"Keys": 2,
+					"Gems": 0,
+					"Checkpoints": 3,
+					"Items": ["swap_blocks", "red_boosters", "dash_switches", "dash_refills", "coins", "springs", "torches", "seekers", "theo_crystal", "pink_cassette_blocks", "blue_cassette_blocks"]
+				},
+				"5c": {
+					"Name": "Mirror Temple C",
+					"Golden Strawberries": 1,
+					"Strawberries": 0,
+					"Binoculars": 1,
+					"Cars": 0,
+					"Rooms": 3,
+					"Crystal Hearts": 0,
+					"Cassettes": 0,
+					"Level Clears": 1,
+					"Keys": 0,
+					"Gems": 0,
+					"Checkpoints": 0,
+					"Items": ["swap_blocks", "red_boosters", "dash_switches", "dash_refills", "springs"]
+				},
+				"6a": {
+					"Name": "Reflection A",
+					"Golden Strawberries": 1,
+					"Strawberries": 0,
+					"Binoculars": 1,
+					"Cars": 0,
+					"Rooms": 62,
+					"Crystal Hearts": 1,
+					"Cassettes": 1,
+					"Level Clears": 1,
+					"Keys": 0,
+					"Gems": 0,
+					"Checkpoints": 4,
+					"Items": ["feathers", "kevin_blocks", "dash_refills", "bumpers", "springs", "coins", "badeline_boosters", "pink_cassette_blocks", "blue_cassette_blocks"]
+				},
+				"6b": {
+					"Name": "Reflection B",
+					"Golden Strawberries": 1,
+					"Strawberries": 0,
+					"Binoculars": 2,
+					"Cars": 0,
+					"Rooms": 28,
+					"Crystal Hearts": 0,
+					"Cassettes": 0,
+					"Level Clears": 1,
+					"Keys": 0,
+					"Gems": 0,
+					"Checkpoints": 3,
+					"Items": ["feathers", "kevin_blocks", "dash_refills", "bumpers", "coins", "springs", "pink_cassette_blocks", "blue_cassette_blocks"]
+				},
+				"6c": {
+					"Name": "Reflection C",
+					"Golden Strawberries": 1,
+					"Strawberries": 0,
+					"Binoculars": 2,
+					"Cars": 0,
+					"Rooms": 3,
+					"Crystal Hearts": 0,
+					"Cassettes": 0,
+					"Level Clears": 1,
+					"Keys": 0,
+					"Gems": 0,
+					"Checkpoints": 0,
+					"Items": ["feathers", "kevin_blocks", "dash_refills", "bumpers"]
+				},
+				"7a": {
+					"Name": "The Summit A",
+					"Golden Strawberries": 1,
+					"Strawberries": 47,
+					"Binoculars": 8,
+					"Cars": 0,
+					"Rooms": 95,
+					"Crystal Hearts": 1,
+					"Cassettes": 1,
+					"Level Clears": 1,
+					"Keys": 1,
+					"Gems": 6,
+					"Checkpoints": 6,
+					"Items": ["springs", "dash_refills", "badeline_boosters", "traffic_blocks", "coins", "dream_blocks", "sinking_platforms", "blue_boosters", "blue_clouds", "strawberry_seeds", "pink_clouds", "move_blocks", "moving_platforms", "swap_blocks", "red_boosters", "dash_switches", "feathers", "pink_cassette_blocks", "blue_cassette_blocks"]
+				},
+				"7b": {
+					"Name": "The Summit B",
+					"Golden Strawberries": 1,
+					"Strawberries": 0,
+					"Binoculars": 2,
+					"Cars": 0,
+					"Rooms": 28,
+					"Crystal Hearts": 0,
+					"Cassettes": 0,
+					"Level Clears": 1,
+					"Keys": 0,
+					"Gems": 0,
+					"Checkpoints": 6,
+					"Items": ["springs", "dash_refills", "badeline_boosters", "traffic_blocks", "coins", "dream_blocks", "moving_platforms", "blue_boosters", "blue_clouds", "pink_clouds", "move_blocks", "swap_blocks", "red_boosters", "pink_cassette_blocks", "blue_cassette_blocks" ]
+				},
+				"7c": {
+					"Name": "The Summit C",
+					"Golden Strawberries": 1,
+					"Strawberries": 0,
+					"Binoculars": 2,
+					"Cars": 0,
+					"Rooms": 3,
+					"Crystal Hearts": 0,
+					"Cassettes": 0,
+					"Level Clears": 1,
+					"Keys": 0,
+					"Gems": 0,
+					"Checkpoints": 0,
+					"Items": ["springs", "dash_refills", "badeline_boosters", "coins", "pink_clouds"]
+				},
+				"8a": {
+					"Name": "Epilogue",
+					"Golden Strawberries": 0,
+					"Strawberries": 0,
+					"Binoculars": 0,
+					"Cars": 0,
+					"Rooms": 3,
+					"Crystal Hearts": 0,
+					"Cassettes": 0,
+					"Level Clears": 0,
+					"Keys": 0,
+					"Gems": 0,
+					"Checkpoints": 0,
+					"Items": []
+				},
+				"9a": {
+					"Name": "Core A",
+					"Golden Strawberries": 1,
+					"Strawberries": 5,
+					"Binoculars": 0,
+					"Cars": 1,
+					"Rooms": 39,
+					"Crystal Hearts": 0,
+					"Cassettes": 1,
+					"Level Clears": 1,
+					"Keys": 0,
+					"Gems": 0,
+					"Checkpoints": 3,
+					"Items": ["springs", "dash_refills", "fire_ice_balls", "bumpers", "core_toggles", "core_blocks", "coins", "badeline_boosters", "feathers", "pink_cassette_blocks", "blue_cassette_blocks"]
+				},
+				"9b": {
+					"Name": "Core B",
+					"Golden Strawberries": 1,
+					"Strawberries": 0,
+					"Binoculars": 0,
+					"Cars": 0,
+					"Rooms": 23,
+					"Crystal Hearts": 0,
+					"Cassettes": 0,
+					"Level Clears": 1,
+					"Keys": 0,
+					"Gems": 0,
+					"Checkpoints": 3,
+					"Items": ["springs", "dash_refills", "traffic_blocks", "fire_ice_balls", "bumpers", "core_toggles", "core_blocks", "coins", "badeline_boosters", "dream_blocks", "moving_platforms", "blue_clouds", "swap_blocks", "kevin_blocks", "pink_cassette_blocks", "blue_cassette_blocks"]
+				},
+				"9c": {
+					"Name": "Core C",
+					"Golden Strawberries": 1,
+					"Strawberries": 0,
+					"Binoculars": 2,
+					"Cars": 0,
+					"Rooms": 4,
+					"Crystal Hearts": 0,
+					"Cassettes": 0,
+					"Level Clears": 1,
+					"Keys": 0,
+					"Gems": 0,
+					"Checkpoints": 0,
+					"Items": ["springs", "dash_refills", "bumpers", "core_toggles", "core_blocks", "traffic_blocks", "dream_blocks", "pink_clouds", "swap_blocks", "kevin_blocks"]
+				},
+				"10a": {
+					"Name": "Farewell (Empty Space)",
+					"Golden Strawberries": 0,
+					"Strawberries": 0,
+					"Binoculars": 14,
+					"Cars": 0,
+					"Rooms": 42,
+					"Crystal Hearts": 1,
+					"Cassettes": 0,
+					"Level Clears": 1,
+					"Keys": 0,
+					"Gems": 0,
+					"Checkpoints": 3,
+					"Items": ["blue_clouds", "badeline_boosters", "dash_refills", "double_dash_refills", "swap_blocks", "springs", "pufferfish", "coins", "dream_blocks", "jellyfish", "red_boosters", "dash_switches", "move_blocks", "breaker_boxes", "traffic_blocks"]
+				},
+				"10b": {
+					"Name": "Farewell (Farewell)",
+					"Golden Strawberries": 0,
+					"Strawberries": 1,
+					"Binoculars": 23,
+					"Cars": 2,
+					"Rooms": 66,
+					"Crystal Hearts": 0,
+					"Cassettes": 0,
+					"Level Clears": 1,
+					"Keys": 5,
+					"Gems": 0,
+					"Checkpoints": 5,
+					"Items": ["dream_blocks", "badeline_boosters", "bird", "dash_refills", "double_dash_refills", "kevin_blocks", "coins", "traffic_blocks", "move_blocks", "blue_boosters", "springs", "feathers", "swap_blocks", "red_boosters", "core_blocks", "fire_ice_balls", "kevin_blocks", "pink_cassette_blocks", "blue_cassette_blocks", "yellow_cassette_blocks", "green_cassette_blocks", "breaker_boxes", "pufferfish", "jellyfish"]
+				},
+				"10c": {
+					"Name": "Farewell (Golden)",
+					"Golden Strawberries": 1,
+					"Strawberries": 0,
+					"Binoculars": 3,
+					"Cars": 0,
+					"Rooms": 1,
+					"Crystal Hearts": 0,
+					"Cassettes": 0,
+					"Level Clears": 0,
+					"Keys": 0,
+					"Gems": 0,
+					"Checkpoints": 0,
+					"Items": ["badeline_boosters", "double_dash_refills", "springs", "pufferfish", "jellyfish"]
+				}
+			};
+
+			$scope.settings = {
+				"totalstrawberries": {
+					"name": "Total Strawberries",
+					"value": 50,
+					"type": "number",
+					"min": 0,
+					"max": 202
+				},
+				"strawberriesrequiredpercentage": {
+					"name": "Strawberries Required Percentage",
+					"value": 0,
+					"type": "number",
+					"min": 0,
+					"max": 100
+				},
+				"goalarea": {
+					"name": "Goal Area",
+					"value": "7a",
+					"type": "choice",
+					"options": [
+						{
+							"name": "The Summit A",
+							"value": "7a"
+						},
+						{
+							"name": "The Summit B",
+							"value": "7b"
+						},
+						{
+							"name": "The Summit C",
+							"value": "7c"
+						},
+						{
+							"name": "Core A",
+							"value": "9a"
+						},
+						{
+							"name": "Core B",
+							"value": "9b"
+						},
+						{
+							"name": "Core C",
+							"value": "9c"
+						},
+						{
+							"name": "Empty Space",
+							"value": "10a"
+						},
+						{
+							"name": "Farewell",
+							"value": "10b"
+						},
+						{
+							"name": "Farewell Golden",
+							"value": "10c"
+						},
+						{
+							"name": "Poetry Slam",
+							"value": "poetryslam"
+						}
+					]
+				},
+				"enablecore": {
+					"name": "Enable Core",
+					"value": false,
+					"type": "bool"
+				},
+				"enablefarewell": {
+					"name": "Enable Farewell",
+					"value": "none",
+					"type": "choice",
+					"options": [
+						{
+							"name": "None",
+							"value": "none"
+						},
+						{
+							"name": "Empty Space",
+							"value": "emptyspace"
+						},
+						{
+							"name": "Farewell",
+							"value": "farewell"
+						}
+					]
+				},
+				"enablebsides": {
+					"name": "Enable B-Sides",
+					"value": false,
+					"type": "bool"
+				},
+				"enablecsides": {
+					"name": "Enable C-Sides",
+					"value": false,
+					"type": "bool"
+				},
+				"binosanity": {
+					"name": "Binosanity",
+					"value": false,
+					"type": "bool"
+				},
+				"roomsanity": {
+					"name": "Roomsanity",
+					"value": false,
+					"type": "bool"
+				},
+				"carsanity": {
+					"name": "Carsanity",
+					"value": false,
+					"type": "bool"
+				},
+				"enablegoldens": {
+					"name": "Enable Goldens",
+					"value": false,
+					"type": "bool"
+				},
+				"splitinteractables": {
+					"name": "Split Interactables",
+					"value": "none",
+					"type": "choice",
+					"options": [
+						{
+							"name": "None",
+							"value": "none"
+						},
+						{
+							"name": "Per Level",
+							"value": "perlevel"
+						},
+						{
+							"name": "Per Side",
+							"value": "perside"
+						},
+						{
+							"name": "Per Level and Side",
+							"value": "perlevelandside"
+						}
+					]
+				},
+				"dashshuffle": {
+					"name": "Dash Shuffle",
+					"value": "none",
+					"type": "choice",
+					"options": [
+						{
+							"name": "None",
+							"value": "none"
+						},
+						{
+							"name": "Unified",
+							"value": "unified"
+						},
+						{
+							"name": "Cardinal Loose",
+							"value": "cardinalloose"
+						},
+						{
+							"name": "Cardinal Restrictive",
+							"value": "cardinalrestrictive"
+						},
+						{
+							"name": "Octal",
+							"value": "octal"
+						}
+					]
+				},
+				"climbshuffle": {
+					"name": "Climb Shuffle",
+					"value": "none",
+					"type": "choice",
+					"options": [
+						{
+							"name": "None",
+							"value": "none"
+						},
+						{
+							"name": "Unified",
+							"value": "unified"
+						},
+						{
+							"name": "Split",
+							"value": "split"
+						}
+					]
+				},
+				"crouchshuffle": {
+					"name": "Crouch Shuffle",
+					"value": false,
+					"type": "bool"
+				},
+				"torchbehavior": {
+					"name": "Torch Behaviour",
+					"value": "vanilla",
+					"type": "choice",
+					"options": [
+						{
+							"name": "Vanilla",
+							"value": "vanilla"
+						},
+						{
+							"name": "Start Lit",
+							"value": "startlit"
+						},
+						{
+							"name": "Start Unlit",
+							"value": "startunlit"
+						},
+						{
+							"name": "Never Lit",
+							"value": "neverlit"
+						}
+					]
+				},
+				"junkfillpercentage": {
+					"name": "Junk Fill Percentage",
+					"value": 50,
+					"type": "number",
+					"min": 0,
+					"max": 100
+				}
+			}
+			
+			$scope.enabledLevels = [];
+			$scope.locations = 0;
+			
+			$scope.calculateEnabledLevels = function(){
+				var enabledLevels = ["0a","1a","2a","3a","4a","5a","6a","7a","8a"];
+				if ($scope.settings.enablebsides.value) { enabledLevels = enabledLevels.concat(["1b","2b","3b","4b","5b","6b","7b"]); }
+				if ($scope.settings.enablecsides.value) { enabledLevels = enabledLevels.concat(["1c","2c","3c","4c","5c","6c","7c"]); }
+				
+				if ($scope.settings.enablecore.value) { 
+					enabledLevels.push("9a");
+					if ($scope.settings.enablebsides.value) { enabledLevels.push("9b"); }
+					if ($scope.settings.enablecsides.value) { enabledLevels.push("9c"); }
+				}
+				
+				if ($scope.settings.enablefarewell.value == "emptyspace") { enabledLevels.push("10a"); }
+				if ($scope.settings.enablefarewell.value == "farewell") { enabledLevels.push("10a"); enabledLevels.push("10b"); }
+				
+				switch($scope.settings.goalarea.value){
+					case "7a":
+						break;
+					case "7b":
+						if (!enabledLevels.includes("7b")) { enabledLevels.push("7b"); }
+						break;
+					case "7c":
+						if (!enabledLevels.includes("7c")) { enabledLevels.push("7c"); }
+						break;
+					case "9a":
+						if (!enabledLevels.includes("9a")) { enabledLevels.push("9a"); }
+						break;
+					case "9b":
+						if (!enabledLevels.includes("9b")) { enabledLevels.push("9b"); }
+						break;
+					case "9c":
+						if (!enabledLevels.includes("9c")) { enabledLevels.push("9c"); }
+						break;
+					case "10c":
+						if (!enabledLevels.includes("10c")) { enabledLevels.push("10c"); }
+					case "10b":	// [[fallthrough]
+						if (!enabledLevels.includes("10b")) { enabledLevels.push("10b"); }
+					case "10a":	// [[fallthrough]
+						if (!enabledLevels.includes("10a")) { enabledLevels.push("10a"); }
+						break;
+					case "poetryslam":
+						break;
+				}
+				
+				$scope.enabledLevels = enabledLevels;
+			};
+			
+			$scope.countLocations = function(){
+				var locations = 0;
+				for(var levelId of $scope.enabledLevels){
+					var level = $scope.levels[levelId];
+					locations += level.Strawberries;
+					locations += level["Level Clears"];
+					locations += level.Cassettes;
+					locations += level["Crystal Hearts"];
+					locations += level.Keys;
+					locations += level.Gems;
+					locations += level.Checkpoints;
+					if($scope.settings.binosanity.value){ locations += level.Binoculars; }
+					if($scope.settings.roomsanity.value){ locations += level.Rooms; }
+					if($scope.settings.carsanity.value){ locations += level.Cars; }
+					if($scope.settings.enablegoldens.value){ locations += level["Golden Strawberries"]; }
+					// Always add farewell golden berry if goal
+					if(levelId == '10c' && $scope.settings.goalarea.value == '10c' && !$scope.settings.enablegoldens.value){ locations += level["Golden Strawberries"]; }
+				}
+				
+				if($scope.settings.goalarea.value == "poetryslam") { locations += 1; }
+				
+				$scope.locations = locations;
+			};
+			
+			$scope.countItems = function(){
+				var items = 0;
+				
+				switch($scope.settings.dashshuffle.value){
+					case "none":
+						break;
+					case "unified":
+						items += 1;
+						break;
+					case "cardinalloose":
+					case "cardinalrestrictive": // [[fallthrough]]
+						items += 4;
+						break;
+					case "octal":
+						items += 8;
+						break;
+				}
+				
+				switch($scope.settings.climbshuffle.value){
+					case "none":
+						break;
+					case "unified":
+						items += 1;
+						break;
+					case "split":
+						items += 2;
+						break;
+				}
+				
+				if($scope.settings.crouchshuffle.value) { items += 1; }
+				
+				for(var levelId of $scope.enabledLevels){
+					var level = $scope.levels[levelId];
+					items += level.Keys;
+					items += level.Gems;
+					items += level.Checkpoints;
+				}
+				
+				items += 1; // House Keys
+				if($scope.settings.goalarea.value == "poetryslam") { items += 16; } // Crystal Hearts are not filler if poetry slam
+				
+				var interactables = new Set();
+				for(var levelId of $scope.enabledLevels){
+					var level = $scope.levels[levelId];
+					var interactablePrefix = "";
+					var levelNo = levelId.match(/\d+/)[0];
+					var sideNo = levelNo == '10' ? 'a' : levelId.match(/[^\d]+/)[0];
+					if($scope.settings.splitinteractables.value == "perlevel") { interactablePrefix = `${levelNo}-`; }
+					else if($scope.settings.splitinteractables.value == "perside") { interactablePrefix = `${sideNo}-`; }
+					else if($scope.settings.splitinteractables.value == "perlevelandside") { interactablePrefix = `${levelNo}${sideNo}-`; }
+					
+					for(var itemName of level.Items){
+						if(itemName.includes("torches") && $scope.settings.torchbehavior.value == "neverlit"){ continue; }
+						interactables.add(`${interactablePrefix}${itemName}`);
+					}
+				}
+				items += interactables.size;
+				
+				$scope.items = items;
+			};
+			
+			$scope.refresh = function(){
+				$scope.calculateEnabledLevels();
+				$scope.countLocations();
+				$scope.countItems();
+			};
+			
+			$scope.refresh();
+		}); 
+		</script>
+	</head>
+	<body>
+		<div class="page-container">
+			<div class="page">
+				<div class="left-pane">
+  				<nav class="nav-tree">
+  					<a href="/">Home</a>
+  					<a href="/CelesteYAML">Celeste (OW) YAML</a>
+  				</nav>
+					<footer class="copyright-policy">
+						&copy; 2026 - Zeeveez
+					</footer>
+				</div>
+
+				<main class="main-pane">
+					<div ng-app="celesteLocationsItemsApp" ng-controller="myCtrl">
+						<h1>Celeste (Open World) YAML Items Validator</h1>
+						<blockquote>
+							Note: The values provided as output by this tool are estimates, and may not be 100% accurate.
+						</blockquote>
+						<ul>
+							<li ng-repeat="setting in settings track by $index">
+								{{setting.name}}
+									<input ng-if="setting.type == 'bool'" type="checkbox" ng-model="setting.value" ng-change="refresh()">
+									<input ng-if="setting.type == 'number'" type="number" ng-model="setting.value" ng-attr-min="{{setting.min}}" ng-attr-min="{{setting.max}}" ng-change="refresh()">
+									<span ng-repeat="option in setting.options track by $index">
+										<input ng-if="setting.type == 'choice'" type="radio" ng-name="setting.name" ng-model="setting.value" ng-value="option.value" ng-change="refresh()">{{option.name}}
+									</span>
+							</li>
+						</ul>
+						<p>
+							Locations: {{locations}}
+						</p>
+						<p>
+							Items: {{items}}
+						</p>
+						<p>
+							Items with Requested Strawberries: {{items + settings.totalstrawberries.value}}
+						</p>
+						<p>
+							Valid: <span style="font-weight:700;" ng-style="{'color': (locations >= items + settings.totalstrawberries.value ? 'green' : 'red')}">{{locations >= items + settings.totalstrawberries.value}}</span>
+						</p>
+					</div>
+				</main>
+			</div>
+		</div>
+	</body>
+</html>
