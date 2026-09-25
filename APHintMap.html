@@ -1,6 +1,12 @@
 <html>
 <head>
     <link rel="stylesheet" type="text/css" href="main.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.8.3/angular.js" integrity="sha512-klc+qN5PPscoGxSzFpetVsCr9sryi2e2vHwZKq43FdFyhSAa7vAqog/Ifl8tzg/8mBZiG2MAKhyjH5oPJp65EA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script>
+    var app = angular.module("apHintMapApp", []);
+        app.controller("myCtrl", function ($scope) {
+
+        });</script>
 </head>
 <body>
     <div class="page-container">
@@ -15,7 +21,11 @@
                     &copy; 2026 - Zeeveez
                 </footer>
             </div>
+
             <main class="main-pane">
+                <div ng-app="celesteLocationsItemsApp" ng-controller="myCtrl">
+                    <h1>Celeste (Open World) YAML Items Validator</h1>
+                </div>
             </main>
         </div>
     </div>
