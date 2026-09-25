@@ -5,7 +5,7 @@
     color: white;
 }
 
-    /**:focus {
+/**:focus {
         outline-offset: -3px;
         outline: 4px dashed purple;
     }*/
@@ -160,10 +160,10 @@ body {
         visibility: visible;
     }
 
-    .main-pane ul li{
+    .main-pane ul li {
         margin-bottom: 8px;
     }
-    
+
     .main-pane blockquote {
         background-color: #2a2822;
         border-left: 3px solid #3a3822;
@@ -228,7 +228,15 @@ body {
         color: black;
     }
 
-    .main-pane input[type="number"] {
+    .main-pane input {
+        color: black;
+    }
+
+    .main-pane button {
+        color: black;
+    }
+
+    .main-pane textarea {
         color: black;
     }
 
@@ -240,6 +248,7 @@ body {
         margin-right: auto;
         box-sizing: border-box;
         text-align: center;
+        height: auto;
     }
 
     .main-pane table {

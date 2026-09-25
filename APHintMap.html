@@ -1,11 +1,62 @@
-<html>
+﻿<html>
 <head>
     <link rel="stylesheet" type="text/css" href="main.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.8.3/angular.js" integrity="sha512-klc+qN5PPscoGxSzFpetVsCr9sryi2e2vHwZKq43FdFyhSAa7vAqog/Ifl8tzg/8mBZiG2MAKhyjH5oPJp65EA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/viz.js/2.1.2/viz.js" integrity="sha512-vnRdmX8ZxbU+IhA2gLhZqXkX1neJISG10xy0iP0WauuClu3AIMknxyDjYHEpEhi8fTZPyOCWgqUCnEafDB/jVQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/viz.js/2.1.2/full.render.js" integrity="sha512-1zKK2bG3QY2JaUPpfHZDUMe3dwBwFdCDwXQ01GrKSd+/l0hqPbF+aak66zYPUZtn+o2JYi1mjXAqy5mW04v3iA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script>
-    var app = angular.module("apHintMapApp", []);
+        var app = angular.module("apHintMapApp", []);
         app.controller("myCtrl", function ($scope) {
+            $scope.trackerLink = ""
+            $scope.trackerHtmlLink = ""
 
+            $scope.UpdateLink = function () {
+                $scope.trackerHtmlLink = `view-source:${$scope.trackerLink}`;
+            }
+
+            $scope.Load = function () {
+                var parser = new DOMParser();
+                var html = parser.parseFromString($scope.data, "text/html");
+
+                var progressRows = html.getElementById('checks-table').tBodies[0].rows;
+                var doneSlots = new Set()
+                for (var row of progressRows) {
+                    var td = row.getElementsByTagName("td");
+                    if (td[3].innerText.trim() == "Goal Completed") {
+                        doneSlots.add(td[1].innerText.trim());
+                    }
+                }
+
+                var hintRows = html.getElementById('hints-table').tBodies[0].rows;
+                var hints = [];
+                for (var row of hintRows) {
+                    var td = row.getElementsByTagName("td");
+                    hints.push({
+                        "Finder": td[0].innerText.trim().replace(/"/g, ""),
+                        "Receiver": td[1].innerText.trim().replace(/"/g, ""),
+                        "Item": td[2].innerText.trim().replace(/"/g, ""),
+                        "Location": td[3].innerText.trim().replace(/"/g, ""),
+                        "Found": td[6].innerText.trim() == "✔",
+                    })
+                }
+
+                var undoneHints = hints.filter(h => !doneSlots.has(h.Receiver));
+                var unfoundHints = undoneHints.filter(h => !h.Found);
+                var finderCounts = unfoundHints.reduce(function (acc, h) {
+                    if (!acc[h.Finder]) { acc[h.Finder] = 1; }
+                    else acc[h.Finder]++;
+                    return acc;
+                }, {});
+                var usefulHints = unfoundHints.filter(h => finderCounts[h.Finder] <= 25);
+
+                var nodeStrings = usefulHints.map(h => `"${h.Finder}" -> "${h.Receiver}" [label="${h.Location}\n${h.Item}"]`);
+                var graphString = `digraph { rankdir=LR; ${nodeStrings.join(";")}}`;
+
+                var viz = new Viz();
+                viz.renderImageElement(graphString).then(img => {
+                    document.getElementById("graph").appendChild(img);
+                });
+            }
         });</script>
 </head>
 <body>
@@ -23,8 +74,18 @@
             </div>
 
             <main class="main-pane">
-                <div ng-app="celesteLocationsItemsApp" ng-controller="myCtrl">
-                    <h1>Celeste (Open World) YAML Items Validator</h1>
+                <div ng-app="apHintMapApp" ng-controller="myCtrl">
+                    <h1>Archipelago Hint Map Drawer</h1>
+                    <blockquote>
+                        Note: Because of CORS, we cannot immediately request the tracker contents without a backend.
+
+                        Input the tracker link and copy/paste the generated view-source link into a new tab to reach the tracker HTML, copy/paste it into the text field, then click Load
+                    </blockquote>
+                    <input type="text" ng-model="trackerLink" ng-change="UpdateLink()" /><br />
+                    <input type="text" disabled="disabled" ng-model="trackerHtmlLink" /><br />
+                    <textarea ng-model="data"></textarea><br />
+                    <button ng-click="Load()">Load</button>
+                    <div id="graph"></div>
                 </div>
             </main>
         </div>
