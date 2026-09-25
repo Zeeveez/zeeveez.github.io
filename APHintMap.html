@@ -27,48 +27,52 @@
 
             function LoadStaticTracker(uuid) {
                 if (uuid in staticTrackers) { return; }
-                $scope.pendingRequests++;
-                $http.get(`https://archipelago.gg/api/static_tracker/${uuid}`).then(function (s) {
-                    staticTrackers[uuid] = s.data;
-                    Object.values(s.data.datapackage).map(v => v.checksum).map(LoadDataPackage);
-                    $scope.pendingRequests--;
-                }, function (e) {
-                    console.log(e);
-                    $scope.pendingRequests--;
-                });
+                setTimeout(function () {
+                    $http.get(`https://archipelago.gg/api/static_tracker/${uuid}`).then(function (s) {
+                        staticTrackers[uuid] = s.data;
+                        Object.values(s.data.datapackage).map(v => v.checksum).map(LoadDataPackage);
+                        $scope.pendingRequests--;
+                    }, function (e) {
+                        console.log(e);
+                        $scope.pendingRequests--;
+                    });
+                }, $scope.pendingRequests++ * 1000);
             }
 
             function LoadDataPackage(checksum) {
                 if (checksum in dataPackageCache) { return; }
-                $scope.pendingRequests++;
-                $http.get(`https://archipelago.gg/api/datapackage/${checksum}`).then(function (s) {
-                    s.data.location_id_to_name = Object.entries(s.data.location_name_to_id).reduce(function (acc, kvp) {
-                        acc[kvp[1]] = kvp[0]
-                        return acc;
-                    }, {});
-                    s.data.item_id_to_name = Object.entries(s.data.item_name_to_id).reduce(function (acc, kvp) {
-                        acc[kvp[1]] = kvp[0]
-                        return acc;
-                    }, {});
-                    dataPackageCache[checksum] = s.data;
-                    $scope.pendingRequests--;
-                }, function (e) {
-                    console.log(e);
-                    $scope.pendingRequests--;
-                });
+                setTimeout(function () {
+                    $http.get(`https://archipelago.gg/api/datapackage/${checksum}`).then(function (s) {
+                        s.data.location_id_to_name = Object.entries(s.data.location_name_to_id).reduce(function (acc, kvp) {
+                            acc[kvp[1]] = kvp[0]
+                            return acc;
+                        }, {});
+                        s.data.item_id_to_name = Object.entries(s.data.item_name_to_id).reduce(function (acc, kvp) {
+                            acc[kvp[1]] = kvp[0]
+                            return acc;
+                        }, {});
+                        dataPackageCache[checksum] = s.data;
+                        $scope.pendingRequests--;
+                    }, function (e) {
+                        console.log(e);
+                        $scope.pendingRequests--;
+                    });
+                }, $scope.pendingRequests++ * 1000);
             }
 
             function LoadTracker(uuid) {
                 $scope.pendingRequests++;
-                $http.get(`https://archipelago.gg/api/tracker/${uuid}`).then(function (s) {
-                    WaitOnPending(function () {
-                        ProcessTracker(uuid, s.data);
+                setTimeout(function () {
+                    $http.get(`https://archipelago.gg/api/tracker/${uuid}`).then(function (s) {
+                        WaitOnPending(function () {
+                            ProcessTracker(uuid, s.data);
+                        });
+                        $scope.pendingRequests--;
+                    }, function (e) {
+                        console.log(e);
+                        $scope.pendingRequests--;
                     });
-                    $scope.pendingRequests--;
-                }, function (e) {
-                    console.log(e);
-                    $scope.pendingRequests--;
-                });
+                }, $scope.pendingRequests++ * 1000);
             }
 
             function WaitOnPending(callback) {
@@ -145,7 +149,7 @@
                 $scope.DrawGraph();
             }
 
-            $scope.DrawGraph = function(){
+            $scope.DrawGraph = function () {
                 var hintIDs = undefined;
                 if ($scope.currentTracker.slotFilter) {
                     hintIDs = new Set();
