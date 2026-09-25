@@ -61,7 +61,6 @@
             }
 
             function LoadTracker(uuid) {
-                $scope.pendingRequests++;
                 setTimeout(function () {
                     $http.get(`https://archipelago.gg/api/tracker/${uuid}`).then(function (s) {
                         WaitOnPending(function () {
