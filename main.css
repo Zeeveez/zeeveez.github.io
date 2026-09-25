@@ -208,6 +208,47 @@ body {
         text-align: right;
     }
 
+    .main-pane form {
+        border: 1px solid white;
+        border-radius: 10px;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+    }
+
+        .main-pane form * {
+            margin: 3px;
+            flex-grow: 1;
+        }
+
+        .main-pane form div {
+            display: flex;
+        }
+
+        .main-pane form span {
+            flex-grow: 0;
+        }
+
+    .main-pane input {
+        color: black;
+    }
+
+    .main-pane select {
+        color: black;
+    }
+
+    .main-pane option {
+        color: black;
+    }
+
+    .main-pane button {
+        color: black;
+    }
+
+    .main-pane textarea {
+        color: black;
+    }
+
     .main-pane pre {
         background-color: #333333;
         border-radius: 5px;
@@ -225,18 +266,6 @@ body {
 
     .main-pane mark {
         background-color: yellow;
-        color: black;
-    }
-
-    .main-pane input {
-        color: black;
-    }
-
-    .main-pane button {
-        color: black;
-    }
-
-    .main-pane textarea {
         color: black;
     }
 

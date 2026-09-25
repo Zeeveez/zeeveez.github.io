@@ -6,58 +6,186 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/viz.js/2.1.2/full.render.js" integrity="sha512-1zKK2bG3QY2JaUPpfHZDUMe3dwBwFdCDwXQ01GrKSd+/l0hqPbF+aak66zYPUZtn+o2JYi1mjXAqy5mW04v3iA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script>
         var app = angular.module("apHintMapApp", []);
-        app.controller("myCtrl", function ($scope) {
-            $scope.trackerLink = ""
-            $scope.trackerHtmlLink = ""
+        app.controller("myCtrl", ["$scope", "$http", function ($scope, $http) {
+            $scope.trackerUUID = "xOa09LPlS2qnrxtmLtQjXw";
+            $scope.pendingRequests = 0;
+
+            dataPackageCache = {};
+            staticTrackers = {};
+
+            $scope.currentTracker = {
+                hints: [],
+                slotFilter: "",
+                slots: []
+            };
 
             $scope.UpdateLink = function () {
-                $scope.trackerHtmlLink = `view-source:${$scope.trackerLink}`;
+                if (!/[a-z0-9]/i.test($scope.trackerUUID)) { return; }
+                LoadStaticTracker($scope.trackerUUID);
+                LoadTracker($scope.trackerUUID);
             }
 
-            $scope.Load = function () {
-                var parser = new DOMParser();
-                var html = parser.parseFromString($scope.data, "text/html");
+            function LoadStaticTracker(uuid) {
+                if (uuid in staticTrackers) { return; }
+                $scope.pendingRequests++;
+                $http.get(`https://archipelago.gg/api/static_tracker/${uuid}`).then(function (s) {
+                    staticTrackers[uuid] = s.data;
+                    Object.values(s.data.datapackage).map(v => v.checksum).map(LoadDataPackage);
+                    $scope.pendingRequests--;
+                }, function (e) {
+                    console.log(e);
+                    $scope.pendingRequests--;
+                });
+            }
 
-                var progressRows = html.getElementById('checks-table').tBodies[0].rows;
-                var doneSlots = new Set()
-                for (var row of progressRows) {
-                    var td = row.getElementsByTagName("td");
-                    if (td[3].innerText.trim() == "Goal Completed") {
-                        doneSlots.add(td[1].innerText.trim());
+            function LoadDataPackage(checksum) {
+                if (checksum in dataPackageCache) { return; }
+                $scope.pendingRequests++;
+                $http.get(`https://archipelago.gg/api/datapackage/${checksum}`).then(function (s) {
+                    s.data.location_id_to_name = Object.entries(s.data.location_name_to_id).reduce(function (acc, kvp) {
+                        acc[kvp[1]] = kvp[0]
+                        return acc;
+                    }, {});
+                    s.data.item_id_to_name = Object.entries(s.data.item_name_to_id).reduce(function (acc, kvp) {
+                        acc[kvp[1]] = kvp[0]
+                        return acc;
+                    }, {});
+                    dataPackageCache[checksum] = s.data;
+                    $scope.pendingRequests--;
+                }, function (e) {
+                    console.log(e);
+                    $scope.pendingRequests--;
+                });
+            }
+
+            function LoadTracker(uuid) {
+                $scope.pendingRequests++;
+                $http.get(`https://archipelago.gg/api/tracker/${uuid}`).then(function (s) {
+                    WaitOnPending(function () {
+                        ProcessTracker(uuid, s.data);
+                    });
+                    $scope.pendingRequests--;
+                }, function (e) {
+                    console.log(e);
+                    $scope.pendingRequests--;
+                });
+            }
+
+            function WaitOnPending(callback) {
+                if (!$scope.pendingRequests) { callback(); return; }
+                setTimeout(WaitOnPending, 250, callback);
+            }
+
+            function ProcessTracker(uuid, trackerData) {
+                var doneSlots = new Set(trackerData.player_status.filter(s => s.status == 30).map(s => s.player));
+                var rawHints = trackerData.hints.reduce(function (acc, p) {
+                    p.hints.reduce(function (acc, h) {
+                        acc.push({
+                            "receiving_player": h[0],
+                            "finding_player": h[1],
+                            "location": h[2],
+                            "item": h[3],
+                            "found": h[4],
+                            "entrance": h[5],
+                            "item_flags": h[6],
+                            "status": h[7]
+                        });
+                        return acc;
+                    }, acc);
+                    return acc;
+                }, []);
+
+                var undoneHints = rawHints.filter(h => !doneSlots.has(h.receiving_player));
+                var unfoundHints = undoneHints.filter(h => !h.found);
+                var finderCounts = unfoundHints.reduce(function (acc, h) {
+                    if (!acc[h.finding_player]) { acc[h.finding_player] = 1; }
+                    else acc[h.finding_player]++;
+                    return acc;
+                }, {});
+                var usefulHints = unfoundHints.filter(h => finderCounts[h.finding_player] <= 25);
+
+                var playerGames = staticTrackers[uuid].player_game.reduce(function (acc, p) {
+                    acc[p.player] = p.game;
+                    return acc;
+                }, {});
+                var playerAliases = trackerData.aliases.reduce(function (acc, p) {
+                    if (p.alias) { acc[p.player] = p.alias; }
+                    return acc;
+                }, {});
+
+                var slots = new Set();
+                var i = 0;
+                var hints = usefulHints.map(h => {
+                    var findingGameDataPackage = dataPackageCache[staticTrackers[uuid].datapackage[playerGames[h.finding_player]].checksum];
+                    var receivingGameDataPackage = dataPackageCache[staticTrackers[uuid].datapackage[playerGames[h.receiving_player]].checksum];
+
+                    var receivingPlayerName = h.receiving_player in playerAliases ? `${playerAliases[h.receiving_player]} (Player ${h.receiving_player})` : `Player ${h.receiving_player} (${playerGames[h.receiving_player]})`;
+                    var findingPlayerName = h.finding_player in playerAliases ? `${playerAliases[h.finding_player]} (Player ${h.finding_player})` : `Player ${h.finding_player} (${playerGames[h.finding_player]})`;
+                    var locationName = findingGameDataPackage.location_id_to_name[h.location];
+                    var itemName = receivingGameDataPackage.item_id_to_name[h.item];
+
+                    slots.add(receivingPlayerName);
+                    slots.add(findingPlayerName);
+
+                    return {
+                        "Id": i++,
+                        "Receiver": receivingPlayerName,
+                        "Finder": findingPlayerName,
+                        "Location": locationName,
+                        "Item": itemName
+                    };
+                });
+
+                var slotFilter = $scope.currentTracker.slotFilter in slots ? $scope.currentTracker.slotFilter : "";
+
+                $scope.currentTracker.hints = hints;
+                $scope.currentTracker.slots = [...slots].sort();
+                $scope.currentTracker.slotFilter = slotFilter;
+
+                $scope.DrawGraph();
+            }
+
+            $scope.DrawGraph = function(){
+                var hintIDs = undefined;
+                if ($scope.currentTracker.slotFilter) {
+                    hintIDs = new Set();
+                    var findersToCheck = [$scope.currentTracker.slotFilter];
+                    while (findersToCheck.length) {
+                        var finder = findersToCheck.pop();
+                        for (var hint of $scope.currentTracker.hints) {
+                            if (hintIDs.has(hint.Id)) { continue; }
+                            if (hint.Finder == finder) {
+                                hintIDs.add(hint.Id);
+                                findersToCheck.push(hint.Receiver);
+                            }
+                        }
+                    }
+
+                    var receiversToCheck = [$scope.currentTracker.slotFilter];
+                    while (receiversToCheck.length) {
+                        var receiver = receiversToCheck.pop();
+                        for (var hint of $scope.currentTracker.hints) {
+                            if (hintIDs.has(hint.Id)) { continue; }
+                            if (hint.Receiver == receiver) {
+                                hintIDs.add(hint.Id);
+                                receiversToCheck.push(hint.Finder);
+                            }
+                        }
                     }
                 }
 
-                var hintRows = html.getElementById('hints-table').tBodies[0].rows;
-                var hints = [];
-                for (var row of hintRows) {
-                    var td = row.getElementsByTagName("td");
-                    hints.push({
-                        "Finder": td[0].innerText.trim().replace(/"/g, ""),
-                        "Receiver": td[1].innerText.trim().replace(/"/g, ""),
-                        "Item": td[2].innerText.trim().replace(/"/g, ""),
-                        "Location": td[3].innerText.trim().replace(/"/g, ""),
-                        "Found": td[6].innerText.trim() == "✔",
-                    })
-                }
-
-                var undoneHints = hints.filter(h => !doneSlots.has(h.Receiver));
-                var unfoundHints = undoneHints.filter(h => !h.Found);
-                var finderCounts = unfoundHints.reduce(function (acc, h) {
-                    if (!acc[h.Finder]) { acc[h.Finder] = 1; }
-                    else acc[h.Finder]++;
-                    return acc;
-                }, {});
-                var usefulHints = unfoundHints.filter(h => finderCounts[h.Finder] <= 25);
-
-                var nodeStrings = usefulHints.map(h => `"${h.Finder}" -> "${h.Receiver}" [label="${h.Location}\n${h.Item}"]`);
-                var graphString = `digraph { rankdir=LR; ${nodeStrings.join(";")}}`;
+                var nodeStrings = $scope.currentTracker.hints
+                    .filter(h => !hintIDs || hintIDs.has(h.Id))
+                    .map(h => `"${h.Finder}" -> "${h.Receiver}" [label="${h.Location}\n${h.Item}"]`);
+                var graphString = `digraph { ${$scope.currentTracker.slotFilter ? "" : "rankdir=LR;"} ${nodeStrings.join(";")}}`;
 
                 var viz = new Viz();
                 viz.renderImageElement(graphString).then(img => {
+                    document.getElementById("graph").innerHTML = "";
                     document.getElementById("graph").appendChild(img);
                 });
             }
-        });</script>
+        }]);</script>
 </head>
 <body>
     <div class="page-container">
@@ -75,16 +203,18 @@
 
             <main class="main-pane">
                 <div ng-app="apHintMapApp" ng-controller="myCtrl">
-                    <h1>Archipelago Hint Map Drawer</h1>
-                    <blockquote>
-                        Note: Because of CORS, we cannot immediately request the tracker contents without a backend.
-
-                        Input the tracker link and copy/paste the generated view-source link into a new tab to reach the tracker HTML, copy/paste it into the text field, then click Load
-                    </blockquote>
-                    <input type="text" ng-model="trackerLink" ng-change="UpdateLink()" /><br />
-                    <input type="text" disabled="disabled" ng-model="trackerHtmlLink" /><br />
-                    <textarea ng-model="data"></textarea><br />
-                    <button ng-click="Load()">Load</button>
+                    <h1>Archipelago Hint Map</h1>
+                    <form>
+                        <div>
+                            <span>Tracker UUID: </span><input type="text" ng-model="trackerUUID" ng-disabled="pendingRequests > 0" ng-change="UpdateLink()" />
+                        </div>
+                        <div>
+                            <span>Slot Filter: </span><select type="text" ng-model="currentTracker.slotFilter" ng-disabled="pendingRequests > 0" ng-change="DrawGraph()">
+                                <option value="">No Filter</option>
+                                <option ng-repeat="slot in currentTracker.slots" value="{{slot}}">{{slot}}</option>
+                            </select>
+                        </div>
+                    </form>
                     <div id="graph"></div>
                 </div>
             </main>
