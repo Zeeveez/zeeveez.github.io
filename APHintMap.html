@@ -20,7 +20,7 @@
             };
 
             $scope.UpdateLink = function () {
-                if (!/[a-z0-9]/i.test($scope.trackerUUID)) { return; }
+                if (!/^[a-z0-9]{22}$/i.test($scope.trackerUUID)) { return; }
                 LoadStaticTracker($scope.trackerUUID);
                 LoadTracker($scope.trackerUUID);
             }
@@ -83,6 +83,7 @@
                 var doneSlots = new Set(trackerData.player_status.filter(s => s.status == 30).map(s => s.player));
                 var rawHints = trackerData.hints.reduce(function (acc, p) {
                     p.hints.reduce(function (acc, h) {
+                        if (h[1] != p.player) { return acc; } // Only process if current player is finding player to prevent duplicates
                         acc.push({
                             "receiving_player": h[0],
                             "finding_player": h[1],
@@ -119,31 +120,35 @@
                 var slots = new Set();
                 var i = 0;
                 var hints = usefulHints.map(h => {
-                    var findingGameDataPackage = dataPackageCache[staticTrackers[uuid].datapackage[playerGames[h.finding_player]].checksum];
-                    var receivingGameDataPackage = dataPackageCache[staticTrackers[uuid].datapackage[playerGames[h.receiving_player]].checksum];
+                    try {
+                        // TODO: Properly implement groups
+                        var findingGameDataPackage = dataPackageCache[staticTrackers[uuid].datapackage[playerGames[h.finding_player]].checksum];
+                        var receivingGameDataPackage = dataPackageCache[staticTrackers[uuid].datapackage[playerGames[h.receiving_player]].checksum];
 
-                    var receivingPlayerName = h.receiving_player in playerAliases ? `${playerAliases[h.receiving_player]} (Player ${h.receiving_player})` : `Player ${h.receiving_player} (${playerGames[h.receiving_player]})`;
-                    var findingPlayerName = h.finding_player in playerAliases ? `${playerAliases[h.finding_player]} (Player ${h.finding_player})` : `Player ${h.finding_player} (${playerGames[h.finding_player]})`;
-                    var locationName = findingGameDataPackage.location_id_to_name[h.location];
-                    var itemName = receivingGameDataPackage.item_id_to_name[h.item];
+                        var receivingPlayerName = h.receiving_player in playerAliases ? `${playerAliases[h.receiving_player]}\n(Player ${h.receiving_player})` : `Player ${h.receiving_player}\n(${playerGames[h.receiving_player]})`;
+                        var findingPlayerName = h.finding_player in playerAliases ? `${playerAliases[h.finding_player]}\n(Player ${h.finding_player})` : `Player ${h.finding_player}\n(${playerGames[h.finding_player]})`;
+                        var locationName = findingGameDataPackage.location_id_to_name[h.location];
+                        var itemName = receivingGameDataPackage.item_id_to_name[h.item];
 
-                    slots.add(receivingPlayerName);
-                    slots.add(findingPlayerName);
+                        slots.add(receivingPlayerName);
+                        slots.add(findingPlayerName);
+                        return {
+                            "Id": i++,
+                            "Receiver": receivingPlayerName,
+                            "Finder": findingPlayerName,
+                            "Location": locationName,
+                            "Item": itemName
+                        };
 
-                    return {
-                        "Id": i++,
-                        "Receiver": receivingPlayerName,
-                        "Finder": findingPlayerName,
-                        "Location": locationName,
-                        "Item": itemName
-                    };
-                });
+                    } catch {
+                        return undefined;
+                    }
+                }).filter(Boolean);
 
-                var slotFilter = $scope.currentTracker.slotFilter in slots ? $scope.currentTracker.slotFilter : "";
-
-                $scope.currentTracker.hints = hints;
                 $scope.currentTracker.slots = [...slots].sort();
-                $scope.currentTracker.slotFilter = slotFilter;
+                $scope.currentTracker.slotFilter = $scope.currentTracker.slotFilter in slots ? $scope.currentTracker.slotFilter : $scope.currentTracker.slots[0];
+                $scope.currentTracker.hints = hints;
+                $scope.$apply();
 
                 $scope.DrawGraph();
             }
@@ -212,13 +217,13 @@
                             <span>Tracker UUID: </span><input type="text" ng-model="trackerUUID" ng-disabled="pendingRequests > 0" ng-change="UpdateLink()" />
                         </div>
                         <div>
-                            <span>Slot Filter: </span><select type="text" ng-model="currentTracker.slotFilter" ng-disabled="pendingRequests > 0" ng-change="DrawGraph()">
+                            <span>Slot Filter: </span><select type="text" ng-model="currentTracker.slotFilter" ng-options="slot as slot for slot in currentTracker.slots" ng-disabled="pendingRequests > 0" ng-change="DrawGraph()">
                                 <option value="">No Filter</option>
-                                <option ng-repeat="slot in currentTracker.slots" value="{{slot}}">{{slot}}</option>
                             </select>
                         </div>
                     </form>
-                    <div id="graph"></div>
+                    <div ng-if="pendingRequests" style="width:100%;display:flex;flex-direction:row;justify-content:space-around;font-size:24px"><p>Loading data... ({{pendingRequests}} requests remaining.)</p></div>
+                    <div ng-if="pendingRequests" id="graph" style="background:white;max-height:800px"></div>
                 </div>
             </main>
         </div>
