@@ -84,6 +84,7 @@
                 var rawHints = trackerData.hints.reduce(function (acc, p) {
                     p.hints.reduce(function (acc, h) {
                         if (h[1] != p.player) { return acc; } // Only process if current player is finding player to prevent duplicates
+                        if (h[0] == h[1]) { return acc; } // Hide self-referential hints
                         acc.push({
                             "receiving_player": h[0],
                             "finding_player": h[1],
