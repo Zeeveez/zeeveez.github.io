@@ -9,33 +9,82 @@
     <script>
         var app = angular.module("apHintMapApp", []);
         app.controller("myCtrl", ["$scope", "$http", function ($scope, $http) {
-            $scope.trackerUUID = "";
+            function QueueRequest(url, callback) {
+                setTimeout(function () {
+                    $http.get(url).then(function (s) {
+                        $scope.pendingRequests--;
+                        callback(s.data);
+                    }, function (e) {
+                        $scope.pendingRequests--;
+                        console.log(e);
+                    });
+                }, $scope.pendingRequests++ * 1000);
+            }
+
+            function WaitOnPending(callback) {
+                if (!$scope.pendingRequests) { callback(); return; }
+                setTimeout(WaitOnPending, 250, callback);
+            }
+
+            function ReverseDict(d) {
+                return Object.entries(d).reduce(function (acc, kvp) {
+                    acc[kvp[1]] = kvp[0];
+                    return acc;
+                }, {});
+            }
+
+            var dataPackageDB = (function () {
+                var db = null;
+                var dbOpen = window.indexedDB.open("APHMDataStore", 1);
+                dbOpen.onupgradeneeded = function (event) {
+                    db = dbOpen.result;
+                    var store = db.createObjectStore("DataPackageStore", { keyPath: "checksum" });
+                }
+                dbOpen.onsuccess = function (event) {
+                    db = dbOpen.result;
+                }
+
+                function StoreDataPackage(dataPackage) {
+                    console.log("Storing", dataPackage);
+                    var tx = db.transaction("DataPackageStore", "readwrite");
+                    var store = tx.objectStore("DataPackageStore");
+                    var req = store.add(dataPackage);
+                    req.onsuccess = function () { /* \o/ */ };
+                    req.onerror = function (evt) {
+                        console.log(evt);
+                    };
+                }
+
+                function FetchDataPackage(checksum, successCallback, failCallback) {
+                    var req = db
+                        .transaction("DataPackageStore", "readonly")
+                        .objectStore("DataPackageStore")
+                        .get(checksum);
+                    req.onsuccess = function (event) {
+                        var res = event.target.result;
+                        if (!res) {
+                            failCallback();
+                        } else {
+                            successCallback(res);
+                        }
+                    }
+                    req.onerror = function () {
+                        failCallback();
+                    }
+                }
+
+                return {
+                    StoreDataPackage: StoreDataPackage,
+                    FetchDataPackage: FetchDataPackage
+                }
+            })();
+
             $scope.pendingRequests = 0;
 
-            var db = null;
             var dataPackages = {};
             var staticTrackers = {};
 
-            var dbOpen = window.indexedDB.open("APHMDataStore", 1);
-            dbOpen.onupgradeneeded = function (event) {
-                db = dbOpen.result;
-                var store = db.createObjectStore("DataPackageStore", { keyPath: "checksum" });
-            }
-            dbOpen.onsuccess = function (event) {
-                db = dbOpen.result;
-            }
-
-            function StoreDataPackage(dataPackage) {
-                console.log("Storing", dataPackage);
-                var tx = db.transaction("DataPackageStore", "readwrite");
-                var store = tx.objectStore("DataPackageStore");
-                var req = store.add(dataPackage);
-                req.onsuccess = function () { /* \o/ */ };
-                req.onerror = function (evt) {
-                    console.log(evt);
-                };
-            }
-
+            $scope.trackerUUID = "";
             $scope.currentTracker = {
                 hints: [],
                 slotFilter: "",
@@ -50,75 +99,35 @@
 
             function LoadStaticTracker(uuid) {
                 if (uuid in staticTrackers) { return; }
-                setTimeout(function () {
-                    $http.get(`https://archipelago.gg/api/static_tracker/${uuid}`).then(function (s) {
-                        staticTrackers[uuid] = s.data;
-                        Object.values(s.data.datapackage).map(v => v.checksum).map(LoadDataPackage);
-                        $scope.pendingRequests--;
-                    }, function (e) {
-                        console.log(e);
-                        $scope.pendingRequests--;
-                    });
-                }, $scope.pendingRequests++ * 1000);
+                QueueRequest(`https://archipelago.gg/api/static_tracker/${uuid}`, function (data) {
+                    staticTrackers[uuid] = data;
+                    Object.values(data.datapackage).map(v => v.checksum).map(LoadDataPackage);
+                });
             }
 
             function LoadDataPackage(checksum) {
                 if (checksum in dataPackages) { return; }
-                var req = db
-                    .transaction("DataPackageStore", "readonly")
-                    .objectStore("DataPackageStore")
-                    .get(checksum);
-                req.onsuccess = function (event) {
-                    var res = event.target.result;
-                    if (!res) {
-                        Fetch();
-                    } else {
-                        dataPackages[checksum] = res;
-                    }
-                }
-                req.onerror = function () {
-                    Fetch();
-                }
-
-                function Fetch() {
-                    setTimeout(function () {
-                        $http.get(`https://archipelago.gg/api/datapackage/${checksum}`).then(function (s) {
-                            s.data.location_id_to_name = Object.entries(s.data.location_name_to_id).reduce(function (acc, kvp) {
-                                acc[kvp[1]] = kvp[0];
-                                return acc;
-                            }, {});
-                            s.data.item_id_to_name = Object.entries(s.data.item_name_to_id).reduce(function (acc, kvp) {
-                                acc[kvp[1]] = kvp[0];
-                                return acc;
-                            }, {});
-                            dataPackages[checksum] = s.data;
-                            $scope.pendingRequests--;
-                            StoreDataPackage(s.data);
-                        }, function (e) {
-                            console.log(e);
-                            $scope.pendingRequests--;
+                dataPackageDB.FetchDataPackage(checksum,
+                    function (dataPackage) {
+                        dataPackages[checksum] = dataPackage;
+                    },
+                    function () {
+                        QueueRequest(`https://archipelago.gg/api/datapackage/${checksum}`, function (data) {
+                            data.location_id_to_name = ReverseDict(data.location_name_to_id);
+                            data.item_id_to_name = ReverseDict(data.item_name_to_id);
+                            dataPackages[checksum] = data;
+                            dataPackageDB.StoreDataPackage(data);
                         });
-                    }, $scope.pendingRequests++ * 1000);
-                }
+                    }
+                );
             }
 
             function LoadTracker(uuid) {
-                setTimeout(function () {
-                    $http.get(`https://archipelago.gg/api/tracker/${uuid}`).then(function (s) {
-                        WaitOnPending(function () {
-                            ProcessTracker(uuid, s.data);
-                        });
-                        $scope.pendingRequests--;
-                    }, function (e) {
-                        console.log(e);
-                        $scope.pendingRequests--;
+                QueueRequest(`https://archipelago.gg/api/tracker/${uuid}`, function (data) {
+                    WaitOnPending(function () {
+                        ProcessTracker(uuid, data);
                     });
-                }, $scope.pendingRequests++ * 1000);
-            }
-
-            function WaitOnPending(callback) {
-                if (!$scope.pendingRequests) { callback(); return; }
-                setTimeout(WaitOnPending, 250, callback);
+                });
             }
 
             function ProcessTracker(uuid, trackerData) {
