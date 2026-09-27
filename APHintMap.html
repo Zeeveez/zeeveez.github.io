@@ -1,17 +1,40 @@
 ﻿<html>
 <head>
     <link rel="stylesheet" type="text/css" href="main.css">
+    <script type="module">
+        import * as Viz from "https://cdn.jsdelivr.net/npm/@viz-js/viz@3.30.0";
+        window.Viz = Viz;
+    </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.8.3/angular.js" integrity="sha512-klc+qN5PPscoGxSzFpetVsCr9sryi2e2vHwZKq43FdFyhSAa7vAqog/Ifl8tzg/8mBZiG2MAKhyjH5oPJp65EA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/viz.js/2.1.2/viz.js" integrity="sha512-vnRdmX8ZxbU+IhA2gLhZqXkX1neJISG10xy0iP0WauuClu3AIMknxyDjYHEpEhi8fTZPyOCWgqUCnEafDB/jVQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/viz.js/2.1.2/full.render.js" integrity="sha512-1zKK2bG3QY2JaUPpfHZDUMe3dwBwFdCDwXQ01GrKSd+/l0hqPbF+aak66zYPUZtn+o2JYi1mjXAqy5mW04v3iA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script>
         var app = angular.module("apHintMapApp", []);
         app.controller("myCtrl", ["$scope", "$http", function ($scope, $http) {
             $scope.trackerUUID = "";
             $scope.pendingRequests = 0;
 
-            dataPackageCache = {};
-            staticTrackers = {};
+            var db = null;
+            var dataPackages = {};
+            var staticTrackers = {};
+
+            var dbOpen = window.indexedDB.open("APHMDataStore", 1);
+            dbOpen.onupgradeneeded = function (event) {
+                db = dbOpen.result;
+                var store = db.createObjectStore("DataPackageStore", { keyPath: "checksum" });
+            }
+            dbOpen.onsuccess = function (event) {
+                db = dbOpen.result;
+            }
+
+            function StoreDataPackage(dataPackage) {
+                console.log("Storing", dataPackage);
+                var tx = db.transaction("DataPackageStore", "readwrite");
+                var store = tx.objectStore("DataPackageStore");
+                var req = store.add(dataPackage);
+                req.onsuccess = function () { /* \o/ */ };
+                req.onerror = function (evt) {
+                    console.log(evt);
+                };
+            }
 
             $scope.currentTracker = {
                 hints: [],
@@ -40,24 +63,43 @@
             }
 
             function LoadDataPackage(checksum) {
-                if (checksum in dataPackageCache) { return; }
-                setTimeout(function () {
-                    $http.get(`https://archipelago.gg/api/datapackage/${checksum}`).then(function (s) {
-                        s.data.location_id_to_name = Object.entries(s.data.location_name_to_id).reduce(function (acc, kvp) {
-                            acc[kvp[1]] = kvp[0]
-                            return acc;
-                        }, {});
-                        s.data.item_id_to_name = Object.entries(s.data.item_name_to_id).reduce(function (acc, kvp) {
-                            acc[kvp[1]] = kvp[0]
-                            return acc;
-                        }, {});
-                        dataPackageCache[checksum] = s.data;
-                        $scope.pendingRequests--;
-                    }, function (e) {
-                        console.log(e);
-                        $scope.pendingRequests--;
-                    });
-                }, $scope.pendingRequests++ * 1000);
+                if (checksum in dataPackages) { return; }
+                var req = db
+                    .transaction("DataPackageStore", "readonly")
+                    .objectStore("DataPackageStore")
+                    .get(checksum);
+                req.onsuccess = function (event) {
+                    var res = event.target.result;
+                    if (!res) {
+                        Fetch();
+                    } else {
+                        dataPackages[checksum] = res;
+                    }
+                }
+                req.onerror = function () {
+                    Fetch();
+                }
+
+                function Fetch() {
+                    setTimeout(function () {
+                        $http.get(`https://archipelago.gg/api/datapackage/${checksum}`).then(function (s) {
+                            s.data.location_id_to_name = Object.entries(s.data.location_name_to_id).reduce(function (acc, kvp) {
+                                acc[kvp[1]] = kvp[0];
+                                return acc;
+                            }, {});
+                            s.data.item_id_to_name = Object.entries(s.data.item_name_to_id).reduce(function (acc, kvp) {
+                                acc[kvp[1]] = kvp[0];
+                                return acc;
+                            }, {});
+                            dataPackages[checksum] = s.data;
+                            $scope.pendingRequests--;
+                            StoreDataPackage(s.data);
+                        }, function (e) {
+                            console.log(e);
+                            $scope.pendingRequests--;
+                        });
+                    }, $scope.pendingRequests++ * 1000);
+                }
             }
 
             function LoadTracker(uuid) {
@@ -123,8 +165,8 @@
                 var hints = usefulHints.map(h => {
                     try {
                         // TODO: Properly implement groups
-                        var findingGameDataPackage = dataPackageCache[staticTrackers[uuid].datapackage[playerGames[h.finding_player]].checksum];
-                        var receivingGameDataPackage = dataPackageCache[staticTrackers[uuid].datapackage[playerGames[h.receiving_player]].checksum];
+                        var findingGameDataPackage = dataPackages[staticTrackers[uuid].datapackage[playerGames[h.finding_player]].checksum];
+                        var receivingGameDataPackage = dataPackages[staticTrackers[uuid].datapackage[playerGames[h.receiving_player]].checksum];
 
                         var receivingPlayerName = h.receiving_player in playerAliases ? `${playerAliases[h.receiving_player]}\n(Player ${h.receiving_player})` : `Player ${h.receiving_player}\n(${playerGames[h.receiving_player]})`;
                         var findingPlayerName = h.finding_player in playerAliases ? `${playerAliases[h.finding_player]}\n(Player ${h.finding_player})` : `Player ${h.finding_player}\n(${playerGames[h.finding_player]})`;
@@ -155,6 +197,9 @@
             }
 
             $scope.DrawGraph = function () {
+                $scope.error = undefined;
+                document.getElementById("graph").innerHTML = "";
+
                 var hintIDs = undefined;
                 if ($scope.currentTracker.slotFilter) {
                     hintIDs = new Set();
@@ -186,13 +231,44 @@
                 var nodeStrings = $scope.currentTracker.hints
                     .filter(h => !hintIDs || hintIDs.has(h.Id))
                     .map(h => `"${h.Finder}" -> "${h.Receiver}" [label="${h.Location}\n${h.Item}"]`);
-                var graphString = `digraph { ${$scope.currentTracker.slotFilter ? "" : "rankdir=LR;"} ${nodeStrings.join(";")}}`;
+                var graphString = `digraph { { ${$scope.currentTracker.slotFilter ? (`"${$scope.currentTracker.slotFilter}" [color=red, shape=rect]`) : "rankdir=LR;"} } ${nodeStrings.join(";")}}`;
 
-                var viz = new Viz();
-                viz.renderImageElement(graphString).then(img => {
-                    document.getElementById("graph").innerHTML = "";
-                    document.getElementById("graph").appendChild(img);
-                });
+                if (graphString.length > 100000) {
+                    if (!confirm(`Warning!
+
+The graph you're attempting to draw is potentially very large.
+The page may hang for an extended period while it attempts to draw it.
+Drawing a graph this size is not guaranteed to be successful.
+
+Do you want to continue?`)) {
+                        $scope.currentTracker.slotFilter = $scope.currentTracker.slots[0];
+                        return;
+                    }
+                }
+
+                Viz.instance()
+                    .then(viz => {
+                        svg = viz.renderSVGElement(graphString);
+                        const data = (new XMLSerializer()).serializeToString(svg);
+                        const svgBlob = new Blob([data], {
+                            type: 'image/svg+xml;charset=utf-8'
+                        });
+                        const url = URL.createObjectURL(svgBlob);
+                        const img = new Image();
+                        img.src = url;
+                        img.onload = function () {
+                            const canvas = document.createElement('canvas');
+                            canvas.width = img.width;
+                            canvas.height = img.height;
+
+                            const ctx = canvas.getContext('2d');
+                            ctx.drawImage(img, 0, 0);
+                            document.getElementById("graph").appendChild(canvas);
+                        };
+                    }
+                    ).catch(e => {
+                        $scope.error = e;
+                    });
             }
         }]);</script>
 </head>
@@ -224,7 +300,8 @@
                         </div>
                     </form>
                     <div ng-if="pendingRequests" style="width:100%;display:flex;flex-direction:row;justify-content:space-around;font-size:24px"><p>Loading data... ({{pendingRequests}} requests remaining.)</p></div>
-                    <div id="graph" style="background:white;max-height:800px;overflow:scroll"></div>
+                    <div ng-if="error" style="width:100%;display:flex;flex-direction:row;justify-content:space-around;font-size:24px"><p>Error generating graph:<br /><br />{{error}}</p></div>
+                    <div id="graph" style="background:white;height:800px;overflow:scroll"></div>
                 </div>
             </main>
         </div>
