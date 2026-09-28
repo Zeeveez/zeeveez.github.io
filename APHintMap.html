@@ -240,7 +240,11 @@
                 var nodeStrings = $scope.currentTracker.hints
                     .filter(h => !hintIDs || hintIDs.has(h.Id))
                     .map(h => `"${h.Finder}" -> "${h.Receiver}" [label="${h.Location}\n${h.Item}"]`);
-                var graphString = `digraph { { ${$scope.currentTracker.slotFilter ? (`"${$scope.currentTracker.slotFilter}" [color=red, shape=rect]`) : "rankdir=LR;"} } ${nodeStrings.join(";")}}`;
+                var graphString = `digraph {
+                    ${$scope.currentTracker.slotFilter ? "" : "rankdir=LR;"}
+                    ${$scope.currentTracker.slotFilter ? `{ "${$scope.currentTracker.slotFilter}" [color=red, shape=rect] }` : ""}
+                    ${nodeStrings.join(";")}
+                }`;
 
                 if (graphString.length > 100000) {
                     if (!confirm(`Warning!
