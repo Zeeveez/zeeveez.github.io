@@ -1,4 +1,5 @@
-﻿<html>
+﻿<!doctype html>
+<html>
 <head>
     <link rel="stylesheet" type="text/css" href="main.css">
     <script type="module">
@@ -31,6 +32,101 @@
                     acc[kvp[1]] = kvp[0];
                     return acc;
                 }, {});
+            }
+
+            function Hint(rawHint) {
+                return {
+                    receivingPlayer: rawHint[0],
+                    findingPlayer: rawHint[1],
+                    location: rawHint[2],
+                    item: rawHint[3],
+                    found: rawHint[4],
+                    entrance: rawHint[5],
+                    itemFlags: rawHint[6],
+                    status: rawHint[7],
+                    combinedStatus: rawHint[6] + rawHint[7],
+
+                    Statuses: {
+                        UNSPECIFIED: 0,
+                        ADVANCEMENT: 1,
+                        USEFUL: 2,
+                        TRAP: 4,
+                        NO_PRIORITY: 10,
+                        AVOID: 20,
+                        PRIORITY: 30,
+                        FOUND: 40
+                    },
+
+                    GetPlayerName: function (player, playerAliases, playerGames) {
+                        return player in playerAliases
+                            ? `${playerAliases[player]}\n(Player ${player})`
+                            : `Player ${player}\n(${playerGames[player]})`;
+                    },
+                    GetReceivingPlayerName: function (playerAliases, playerGames) {
+                        return this.GetPlayerName(this.receivingPlayer, playerAliases, playerGames);
+                    },
+                    GetFindingPlayerName: function (playerAliases, playerGames) {
+                        return this.GetPlayerName(this.findingPlayer, playerAliases, playerGames);
+                    },
+                    GetColor: function () {
+                        switch (this.combinedStatus) {
+                            case this.Statuses.UNSPECIFIED:
+                                return "#000000";
+                            case this.Statuses.ADVANCEMENT:
+                                return "#00ff00";
+                            case this.Statuses.USEFUL:
+                                return "#3567ff";
+                            case this.Statuses.ADVANCEMENT + this.Statuses.USEFUL:
+                                return "#00ff00";
+                            case this.Statuses.TRAP:
+                                return "#ff5160";
+                            case this.Statuses.ADVANCEMENT + this.Statuses.TRAP:
+                                return "#00ff00";
+                            case this.Statuses.USEFUL + this.Statuses.TRAP:
+                                return "#3567ff";
+                            case this.Statuses.ADVANCEMENT + this.Statuses.USEFUL + this.Statuses.TRAP:
+                                return "#00ff00";
+                            case this.Statuses.NO_PRIORITY:
+                                return "#3567ff";
+                            case this.Statuses.AVOID:
+                                return "#ff5160";
+                            case this.Statuses.PRIORITY:
+                                return "#00ff00";
+                            case this.Statuses.FOUND:
+                                return "#000000";
+                        }
+                        return "#000000";
+                    },
+                    GetVisibility: function (visibilitySettings) {
+                        switch (this.combinedStatus) {
+                            case this.Statuses.UNSPECIFIED:
+                                return visibilitySettings.unspecified;
+                            case this.Statuses.ADVANCEMENT:
+                                return visibilitySettings.advancement;
+                            case this.Statuses.USEFUL:
+                                return visibilitySettings.useful;
+                            case this.Statuses.ADVANCEMENT + this.Statuses.USEFUL:
+                                return visibilitySettings.advancement_useful;
+                            case this.Statuses.TRAP:
+                                return visibilitySettings.trap;
+                            case this.Statuses.ADVANCEMENT + this.Statuses.TRAP:
+                                return visibilitySettings.advancement_trap;
+                            case this.Statuses.USEFUL + this.Statuses.TRAP:
+                                return visibilitySettings.useful_trap;
+                            case this.Statuses.ADVANCEMENT + this.Statuses.USEFUL + this.Statuses.TRAP:
+                                return visibilitySettings.advancement_useful_trap;
+                            case this.Statuses.NO_PRIORITY:
+                                return visibilitySettings.no_priority;
+                            case this.Statuses.AVOID:
+                                return visibilitySettings.avoid;
+                            case this.Statuses.PRIORITY:
+                                return visibilitySettings.priority;
+                            case this.Statuses.FOUND:
+                                return visibilitySettings.found;
+                        }
+                        return true;
+                    }
+                }
             }
 
             var dataPackageDB = (function () {
@@ -90,6 +186,22 @@
                 slotFilter: "",
                 slots: []
             };
+            $scope.settings = {
+                visibility: {
+                    advancement: true,
+                    useful: false,
+                    advancement_useful: true,
+                    trap: false,
+                    advancement_trap: true,
+                    useful_trap: false,
+                    advancement_useful_trap: false,
+                    no_priority: false,
+                    avoid: false,
+                    priority: true,
+                    found: false,
+                },
+                maxHintsPerWorld: 5
+            }
 
             $scope.UpdateLink = function () {
                 if (!/^[a-z0-9]{22}$/i.test($scope.trackerUUID)) { return; }
@@ -130,35 +242,32 @@
                 });
             }
 
-            function ProcessTracker(uuid, trackerData) {
-                var doneSlots = new Set(trackerData.player_status.filter(s => s.status == 30).map(s => s.player));
-                var rawHints = trackerData.hints.reduce(function (acc, p) {
+            function LoadTrackerHints(trackerData) {
+                return trackerData.hints.reduce(function (acc, p) {
                     p.hints.reduce(function (acc, h) {
-                        if (h[1] != p.player) { return acc; } // Only process if current player is finding player to prevent duplicates
-                        if (h[0] == h[1]) { return acc; } // Hide self-referential hints
-                        acc.push({
-                            "receiving_player": h[0],
-                            "finding_player": h[1],
-                            "location": h[2],
-                            "item": h[3],
-                            "found": h[4],
-                            "entrance": h[5],
-                            "item_flags": h[6],
-                            "status": h[7]
-                        });
+                        var hint = Hint(h);
+                        if (hint.findingPlayer == p.player) { return acc; } // Only process if current player is finding player to prevent duplicates
+                        if (hint.findingPlayer == hint.receivingPlayer) { return acc; } // Hide self-referential hints
+                        acc.push(hint);
                         return acc;
                     }, acc);
                     return acc;
                 }, []);
+            }
 
-                var undoneHints = rawHints.filter(h => !doneSlots.has(h.receiving_player));
-                var unfoundHints = undoneHints.filter(h => !h.found);
-                var finderCounts = unfoundHints.reduce(function (acc, h) {
-                    if (!acc[h.finding_player]) { acc[h.finding_player] = 1; }
-                    else acc[h.finding_player]++;
-                    return acc;
-                }, {});
-                var usefulHints = unfoundHints.filter(h => finderCounts[h.finding_player] <= 25);
+            function ProcessTracker(uuid, trackerData) {
+                var doneSlots = new Set(trackerData.player_status.filter(s => s.status == 30).map(s => s.player));
+                var rawHints = LoadTrackerHints(trackerData);
+                var finderCounts = {};
+                var filteredHints = rawHints
+                    .filter(h =>
+                        !h.found
+                        && h.GetVisibility($scope.settings.visibility)
+                        && !doneSlots.has(h.receivingPlayer))
+                    .filter(function (h) {
+                        finderCounts[h.findingPlayer] = (finderCounts[h.findingPlayer] || 0) + 1;
+                        return finderCounts[h.findingPlayer] <= $scope.settings.maxHintsPerWorld;
+                    }, {});
 
                 var playerGames = staticTrackers[uuid].player_game.reduce(function (acc, p) {
                     acc[p.player] = p.game;
@@ -169,27 +278,30 @@
                     return acc;
                 }, {});
 
-                var slots = new Set();
+                var slots = filteredHints.reduce(function (acc, h) {
+                    acc.add(h.GetReceivingPlayerName(playerAliases, playerGames));
+                    acc.add(h.GetFindingPlayerName(playerAliases, playerGames));
+                    return acc;
+                }, new Set());
+
                 var i = 0;
-                var hints = usefulHints.map(h => {
+                var hints = filteredHints.map(h => {
                     try {
                         // TODO: Properly implement groups
-                        var findingGameDataPackage = dataPackages[staticTrackers[uuid].datapackage[playerGames[h.finding_player]].checksum];
-                        var receivingGameDataPackage = dataPackages[staticTrackers[uuid].datapackage[playerGames[h.receiving_player]].checksum];
+                        var findingGameDataPackage = dataPackages[staticTrackers[uuid].datapackage[playerGames[h.findingPlayer]].checksum];
+                        var receivingGameDataPackage = dataPackages[staticTrackers[uuid].datapackage[playerGames[h.receivingPlayer]].checksum];
 
-                        var receivingPlayerName = h.receiving_player in playerAliases ? `${playerAliases[h.receiving_player]}\n(Player ${h.receiving_player})` : `Player ${h.receiving_player}\n(${playerGames[h.receiving_player]})`;
-                        var findingPlayerName = h.finding_player in playerAliases ? `${playerAliases[h.finding_player]}\n(Player ${h.finding_player})` : `Player ${h.finding_player}\n(${playerGames[h.finding_player]})`;
+                        var receivingPlayerName = h.GetReceivingPlayerName(playerAliases, playerGames);
+                        var findingPlayerName = h.GetFindingPlayerName(playerAliases, playerGames);
                         var locationName = findingGameDataPackage.location_id_to_name[h.location];
                         var itemName = receivingGameDataPackage.item_id_to_name[h.item];
-
-                        slots.add(receivingPlayerName);
-                        slots.add(findingPlayerName);
                         return {
                             "Id": i++,
                             "Receiver": receivingPlayerName,
                             "Finder": findingPlayerName,
                             "Location": locationName,
-                            "Item": itemName
+                            "Item": itemName,
+                            "Color": h.GetColor(),
                         };
 
                     } catch {
@@ -239,33 +351,21 @@
 
                 var nodeStrings = $scope.currentTracker.hints
                     .filter(h => !hintIDs || hintIDs.has(h.Id))
-                    .map(h => `"${h.Finder}" -> "${h.Receiver}" [label="${h.Location}\n${h.Item}"]`);
+                    .map(h => `"${h.Finder}" -> "${h.Receiver}" [label="${h.Location}\n${h.Item}" color="${h.Color}"]`);
                 var graphString = `digraph {
-                    ${$scope.currentTracker.slotFilter ? "" : "rankdir=LR;"}
-                    ${$scope.currentTracker.slotFilter ? `{ "${$scope.currentTracker.slotFilter}" [color=red, shape=rect] }` : ""}
-                    ${nodeStrings.join(";")}
-                }`;
+                            ${$scope.currentTracker.slotFilter ? "" : "rankdir=LR;"}
+                            ${$scope.currentTracker.slotFilter ? `{ "${$scope.currentTracker.slotFilter}" [color=red, shape=rect] }` : ""}
+                            ${nodeStrings.join(";")}
+                        }`;
+                RenderGraphString(graphString);
+            }
 
-                if (graphString.length > 100000) {
-                    if (!confirm(`Warning!
-
-The graph you're attempting to draw is potentially very large.
-The page may hang for an extended period while it attempts to draw it.
-Drawing a graph this size is not guaranteed to be successful.
-
-Do you want to continue?`)) {
-                        $scope.currentTracker.slotFilter = $scope.currentTracker.slots[0];
-                        return;
-                    }
-                }
-
+            function RenderGraphString(graphString) {
                 Viz.instance()
                     .then(viz => {
                         svg = viz.renderSVGElement(graphString);
                         const data = (new XMLSerializer()).serializeToString(svg);
-                        const svgBlob = new Blob([data], {
-                            type: 'image/svg+xml;charset=utf-8'
-                        });
+                        const svgBlob = new Blob([data], { type: 'image/svg+xml;charset=utf-8' });
                         const url = URL.createObjectURL(svgBlob);
                         const img = new Image();
                         img.src = url;
@@ -304,16 +404,26 @@ Do you want to continue?`)) {
                     <h1>Archipelago Hint Map</h1>
                     <form>
                         <div>
-                            <span>Tracker UUID: </span><input type="text" ng-model="trackerUUID" ng-disabled="pendingRequests > 0" ng-change="UpdateLink()" />
+                            <span>Tracker UUID: </span>
+                            <input type="text" ng-model="trackerUUID" ng-disabled="pendingRequests > 0" ng-change="UpdateLink()" />
                         </div>
                         <div>
-                            <span>Slot Filter: </span><select type="text" ng-model="currentTracker.slotFilter" ng-options="slot as slot for slot in currentTracker.slots" ng-disabled="pendingRequests > 0" ng-change="DrawGraph()">
+                            <span>Slot Filter: </span>
+                            <select type="text" ng-model="currentTracker.slotFilter" ng-options="slot as slot for slot in currentTracker.slots" ng-disabled="pendingRequests > 0" ng-change="DrawGraph()">
                                 <option value="">No Filter</option>
                             </select>
                         </div>
                     </form>
-                    <div ng-if="pendingRequests" style="width:100%;display:flex;flex-direction:row;justify-content:space-around;font-size:24px"><p>Loading data... ({{pendingRequests}} requests remaining.)</p></div>
-                    <div ng-if="error" style="width:100%;display:flex;flex-direction:row;justify-content:space-around;font-size:24px"><p>Error generating graph:<br /><br />{{error}}</p></div>
+                    <div ng-if="pendingRequests" style="width:100%;display:flex;flex-direction:row;justify-content:space-around;font-size:24px">
+                        <p>Loading data... ({{pendingRequests}} requests remaining.)</p>
+                    </div>
+                    <div ng-if="error" style="width:100%;display:flex;flex-direction:row;justify-content:space-around;font-size:24px">
+                        <p>
+                            Error generating graph:
+                            <br />
+                            <br />{{error}}
+                        </p>
+                    </div>
                     <div id="graph" style="background:white;height:800px;overflow:scroll"></div>
                 </div>
             </main>
