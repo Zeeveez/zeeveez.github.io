@@ -9,7 +9,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.8.3/angular.js" integrity="sha512-klc+qN5PPscoGxSzFpetVsCr9sryi2e2vHwZKq43FdFyhSAa7vAqog/Ifl8tzg/8mBZiG2MAKhyjH5oPJp65EA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script>
         var app = angular.module("apHintMapApp", []);
-        app.controller("myCtrl", ["$scope", "$http", function ($scope, $http) {
+        app.controller("myCtrl", ["$scope", "$http", "$timeout", function ($scope, $http, $timeout) {
             function QueueRequest(url, callback) {
                 setTimeout(function () {
                     $http.get(url).then(function (s) {
@@ -309,12 +309,13 @@
                     }
                 }).filter(Boolean);
 
-                $scope.currentTracker.slots = [...slots].sort();
-                $scope.currentTracker.slotFilter = $scope.currentTracker.slotFilter in slots ? $scope.currentTracker.slotFilter : $scope.currentTracker.slots[0];
-                $scope.currentTracker.hints = hints;
-                $scope.$apply();
+                $timeout(function () {
+                    $scope.currentTracker.slots = [...slots].sort();
+                    $scope.currentTracker.slotFilter = $scope.currentTracker.slotFilter in slots ? $scope.currentTracker.slotFilter : $scope.currentTracker.slots[0];
+                    $scope.currentTracker.hints = hints;
 
-                $scope.DrawGraph();
+                    $scope.DrawGraph();
+                });
             }
 
             $scope.DrawGraph = function () {
