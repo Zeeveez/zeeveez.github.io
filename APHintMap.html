@@ -380,7 +380,9 @@
                                 ctx.drawImage(img, 0, 0);
                                 document.getElementById("graph").appendChild(canvas);
                             } catch {
-                                $scope.error = `Image too large to draw (${img.width}x${img.height})`
+                                $timeout(function () {
+                                    $scope.error = `Image too large to draw (${img.width}x${img.height})`
+                                });
                             }
                         };
                     }

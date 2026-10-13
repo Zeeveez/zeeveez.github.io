@@ -112,21 +112,25 @@ body {
 
     .main-pane h1 {
         font-size: 24pt;
+        line-height: 1.25;
     }
 
     .main-pane h2 {
         font-size: 20pt;
         margin-left: 10px;
+        line-height: 1.25;
     }
 
     .main-pane h3 {
         font-size: 18pt;
         margin-left: 15px;
+        line-height: 1.25;
     }
 
     .main-pane *:is(h4, h5, h6) {
         font-size: 14pt;
         margin-left: 25px;
+        line-height: 1.25;
     }
 
     .main-pane h1 .header-anchor {
@@ -211,9 +215,10 @@ body {
     .main-pane form {
         border: 1px solid white;
         border-radius: 10px;
-        padding: 20px;
+        padding: 10px;
         display: flex;
         flex-direction: column;
+        margin: 10px 0px;
     }
 
         .main-pane form * {
