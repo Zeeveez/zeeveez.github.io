@@ -354,10 +354,10 @@
                     .filter(h => !hintIDs || hintIDs.has(h.Id))
                     .map(h => `"${h.Finder}" -> "${h.Receiver}" [label="${h.Location}\n${h.Item}" color="${h.Color}"]`);
                 var graphString = `digraph {
-                            ${$scope.currentTracker.slotFilter ? "" : "rankdir=LR;"}
-                            ${$scope.currentTracker.slotFilter ? `{ "${$scope.currentTracker.slotFilter}" [color=red, shape=rect] }` : ""}
-                            ${nodeStrings.join(";")}
-                        }`;
+                                ${$scope.currentTracker.slotFilter ? "" : "rankdir=LR;"}
+                                ${$scope.currentTracker.slotFilter ? `{ "${$scope.currentTracker.slotFilter}" [color=red, shape=rect] }` : ""}
+                                ${nodeStrings.join(";")}
+                            }`;
                 RenderGraphString(graphString);
             }
 
@@ -419,6 +419,21 @@
                             <select type="text" ng-model="currentTracker.slotFilter" ng-options="slot as slot for slot in currentTracker.slots" ng-disabled="pendingRequests > 0" ng-change="DrawGraph()">
                                 <option value="">No Filter</option>
                             </select>
+                        </div>
+                        <blockquote>
+                            Note: Max Hint and Visibility settings require reloading the tracker to take effect (cut and paste the UUID).
+                        </blockquote>
+                        <div>
+                            <span>Max Hints Per World: </span>
+                            <input type="number" ng-model="settings.maxHintsPerWorld" />
+                        </div>
+                        <div>
+                            <span>Visibility: </span>
+                            <ul>
+                                <li ng-repeat="(k, v) in settings.visibility">
+                                    <input type="checkbox" ng-model="settings.visibility[k]" /> {{k}}
+                                </li>
+                            </ul>
                         </div>
                     </form>
                     <div ng-if="pendingRequests" style="width:100%;display:flex;flex-direction:row;justify-content:space-around;font-size:24px">
