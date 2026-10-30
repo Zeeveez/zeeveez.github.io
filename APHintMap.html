@@ -46,17 +46,6 @@
                     status: rawHint[7],
                     combinedStatus: rawHint[6] + rawHint[7],
 
-                    Statuses: {
-                        UNSPECIFIED: 0,
-                        ADVANCEMENT: 1,
-                        USEFUL: 2,
-                        TRAP: 4,
-                        NO_PRIORITY: 10,
-                        AVOID: 20,
-                        PRIORITY: 30,
-                        FOUND: 40
-                    },
-
                     GetPlayerName: function (player, playerAliases, playerGames) {
                         return player in playerAliases
                             ? `${playerAliases[player]}\n(Player ${player})`
@@ -68,63 +57,11 @@
                     GetFindingPlayerName: function (playerAliases, playerGames) {
                         return this.GetPlayerName(this.findingPlayer, playerAliases, playerGames);
                     },
-                    GetColor: function () {
-                        switch (this.combinedStatus) {
-                            case this.Statuses.UNSPECIFIED:
-                                return "#000000";
-                            case this.Statuses.ADVANCEMENT:
-                                return "#00ff00";
-                            case this.Statuses.USEFUL:
-                                return "#3567ff";
-                            case this.Statuses.ADVANCEMENT + this.Statuses.USEFUL:
-                                return "#00ff00";
-                            case this.Statuses.TRAP:
-                                return "#ff5160";
-                            case this.Statuses.ADVANCEMENT + this.Statuses.TRAP:
-                                return "#00ff00";
-                            case this.Statuses.USEFUL + this.Statuses.TRAP:
-                                return "#3567ff";
-                            case this.Statuses.ADVANCEMENT + this.Statuses.USEFUL + this.Statuses.TRAP:
-                                return "#00ff00";
-                            case this.Statuses.NO_PRIORITY:
-                                return "#3567ff";
-                            case this.Statuses.AVOID:
-                                return "#ff5160";
-                            case this.Statuses.PRIORITY:
-                                return "#00ff00";
-                            case this.Statuses.FOUND:
-                                return "#000000";
-                        }
-                        return "#000000";
+                    GetColor: function(colorSettings) {
+                        return colorSettings[this.combinedStatus];
                     },
                     GetVisibility: function (visibilitySettings) {
-                        switch (this.combinedStatus) {
-                            case this.Statuses.UNSPECIFIED:
-                                return visibilitySettings.unspecified;
-                            case this.Statuses.ADVANCEMENT:
-                                return visibilitySettings.advancement;
-                            case this.Statuses.USEFUL:
-                                return visibilitySettings.useful;
-                            case this.Statuses.ADVANCEMENT + this.Statuses.USEFUL:
-                                return visibilitySettings.advancement_useful;
-                            case this.Statuses.TRAP:
-                                return visibilitySettings.trap;
-                            case this.Statuses.ADVANCEMENT + this.Statuses.TRAP:
-                                return visibilitySettings.advancement_trap;
-                            case this.Statuses.USEFUL + this.Statuses.TRAP:
-                                return visibilitySettings.useful_trap;
-                            case this.Statuses.ADVANCEMENT + this.Statuses.USEFUL + this.Statuses.TRAP:
-                                return visibilitySettings.advancement_useful_trap;
-                            case this.Statuses.NO_PRIORITY:
-                                return visibilitySettings.no_priority;
-                            case this.Statuses.AVOID:
-                                return visibilitySettings.avoid;
-                            case this.Statuses.PRIORITY:
-                                return visibilitySettings.priority;
-                            case this.Statuses.FOUND:
-                                return visibilitySettings.found;
-                        }
-                        return true;
+                        return visibilitySettings[this.combinedStatus];
                     }
                 }
             }
@@ -187,20 +124,109 @@
                 slots: []
             };
             $scope.settings = {
+                maxHintsPerWorld: 5,
                 visibility: {
-                    advancement: true,
-                    useful: false,
-                    advancement_useful: true,
-                    trap: false,
-                    advancement_trap: true,
-                    useful_trap: false,
-                    advancement_useful_trap: false,
-                    no_priority: false,
-                    avoid: false,
-                    priority: true,
-                    found: false,
+                    // Unspecified
+                    0: true,
+                    1: true,
+                    2: false,
+                    3: true,
+                    4: false,
+                    5: true,
+                    6: false,
+                    7: true,
+
+                    // No Priority
+                    10: true,
+                    11: true,
+                    12: false,
+                    13: true,
+                    14: false,
+                    15: true,
+                    16: false,
+                    17: true,
+
+                    // Avoid
+                    20: false,
+                    21: false,
+                    22: false,
+                    23: false,
+                    24: false,
+                    25: false,
+                    26: false,
+                    27: false,
+
+                    // Priority
+                    30: true,
+                    31: true,
+                    32: true,
+                    33: true,
+                    34: true,
+                    35: true,
+                    36: true,
+                    37: true,
+
+                    // Found
+                    40: false,
+                    41: false,
+                    42: false,
+                    43: false,
+                    44: false,
+                    45: false,
+                    46: false,
+                    47: false
                 },
-                maxHintsPerWorld: 5
+                colors: {
+                    // Unspecified
+                    0: "#000000",
+                    1: "#00ff00",
+                    2: "#3567ff",
+                    3: "#00ff00",
+                    4: "#ff5160",
+                    5: "#00ff00",
+                    6: "#3567ff",
+                    7: "#00ff00",
+
+                    // No Priority
+                    10: "#000000",
+                    11: "#00ff00",
+                    12: "#3567ff",
+                    13: "#00ff00",
+                    14: "#ff5160",
+                    15: "#00ff00",
+                    16: "#3567ff",
+                    17: "#00ff00",
+
+                    // Avoid
+                    20: "#ff5160",
+                    21: "#ff5160",
+                    22: "#ff5160",
+                    23: "#ff5160",
+                    24: "#ff5160",
+                    25: "#ff5160",
+                    26: "#ff5160",
+                    27: "#ff5160",
+
+                    // Priority
+                    30: "#00ff00",
+                    31: "#00ff00",
+                    32: "#00ff00",
+                    33: "#00ff00",
+                    34: "#00ff00",
+                    35: "#00ff00",
+                    36: "#00ff00",
+                    37: "#00ff00",
+
+                    // Found
+                    40: "#000000",
+                    41: "#00ff00",
+                    42: "#3567ff",
+                    43: "#00ff00",
+                    44: "#ff5160",
+                    45: "#00ff00",
+                    46: "#3567ff",
+                    47: "#00ff00",
+                },
             }
 
             $scope.UpdateLink = function () {
@@ -301,7 +327,7 @@
                             "Finder": findingPlayerName,
                             "Location": locationName,
                             "Item": itemName,
-                            "Color": h.GetColor(),
+                            "Color": h.GetColor($scope.settings.colors),
                         };
 
                     } catch {
@@ -354,10 +380,10 @@
                     .filter(h => !hintIDs || hintIDs.has(h.Id))
                     .map(h => `"${h.Finder}" -> "${h.Receiver}" [label="${h.Location}\n${h.Item}" color="${h.Color}"]`);
                 var graphString = `digraph {
-                                ${$scope.currentTracker.slotFilter ? "" : "rankdir=LR;"}
-                                ${$scope.currentTracker.slotFilter ? `{ "${$scope.currentTracker.slotFilter}" [color=red, shape=rect] }` : ""}
-                                ${nodeStrings.join(";")}
-                            }`;
+                                    ${$scope.currentTracker.slotFilter ? "" : "rankdir=LR;"}
+                                    ${$scope.currentTracker.slotFilter ? `{ "${$scope.currentTracker.slotFilter}" [color=red, shape=rect] }` : ""}
+                                    ${nodeStrings.join(";")}
+                                }`;
                 RenderGraphString(graphString);
             }
 
@@ -429,11 +455,39 @@
                         </div>
                         <div>
                             <span>Visibility: </span>
-                            <ul>
-                                <li ng-repeat="(k, v) in settings.visibility">
-                                    <input type="checkbox" ng-model="settings.visibility[k]" /> {{k}}
-                                </li>
-                            </ul>
+                            <table>
+                                <tr>
+                                    <th></th>
+                                    <th>Unspecified</th>
+                                    <th>Advancement</th>
+                                    <th>Useful</th>
+                                    <th>Advancement + Useful</th>
+                                    <th>Trap</th>
+                                    <th>Advancement + Trap</th>
+                                    <th>Useful + Trap</th>
+                                    <th>Advancement + Useful + Trap</th>
+                                </tr>
+                                <tr>
+                                    <td>Unspecified</td>
+                                    <td ng-repeat="c in [0,1,2,3,4,5,6,7]"><input type="checkbox" ng-model="settings.visibility[0 + c]" /></td>
+                                <tr>
+                                <tr>
+                                    <td>No Priority</td>
+                                    <td ng-repeat="c in [0,1,2,3,4,5,6,7]"><input type="checkbox" ng-model="settings.visibility[10 + c]" /></td>
+                                <tr>
+                                <tr>
+                                    <td>Avoid</td>
+                                    <td ng-repeat="c in [0,1,2,3,4,5,6,7]"><input type="checkbox" ng-model="settings.visibility[20 + c]" /></td>
+                                <tr>
+                                <tr>
+                                    <td>Priority</td>
+                                    <td ng-repeat="c in [0,1,2,3,4,5,6,7]"><input type="checkbox" ng-model="settings.visibility[30 + c]" /></td>
+                                <tr>
+                                <tr>
+                                    <td>Found</td>
+                                    <td ng-repeat="c in [0,1,2,3,4,5,6,7]"><input type="checkbox" ng-model="settings.visibility[40 + c]" /></td>
+                                <tr>
+                            </table>
                         </div>
                     </form>
                     <div ng-if="pendingRequests" style="width:100%;display:flex;flex-direction:row;justify-content:space-around;font-size:24px">
